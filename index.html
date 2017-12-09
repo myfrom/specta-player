@@ -14,14 +14,15 @@
     <script src="bower_components/webcomponentsjs/webcomponents-loader.js" async></script>
     <link rel="import" href="src/sp-shell.html">
     
-    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <!-- Global site tag (gtag.js) - Google Analytics && Service Worker installation -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110620543-1"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-    
       gtag('config', 'UA-110620543-1');
+      
+      navigator.serviceWorker.register('service-worker.js', { scope: '/specta-player/' });
     </script>
     
     <style>

@@ -5,7 +5,7 @@
   "display": "standalone",
   "theme-color": "#009688",
   "background-color": "#009688",
-  "start_url": "/"
+  "start_url": "/specta-player/",
   "icons": [{
     "src": "images/icons/48.png",
     "sizes": "48x48",
