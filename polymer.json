@@ -1,0 +1,36 @@
+{
+  
+  "entrypoint": "index.html",
+  
+  "shell": "src/sp-shell.html",
+  
+  "fragments": [
+    "src/sp-upload.html",
+    "src/sp-console.html",
+    "src/notifier.html"
+  ],
+  
+  "sources": [
+   "src/**/*",
+   "images/**/*",
+   "bower.json"
+  ],
+  
+  "extraDependencies": [
+    "manifest.json",
+    "bower_components/webcomponentsjs/webcomponents-lite.js",
+    "loader.css",
+    "images/icons/*.*",
+    "images/upload.svg",
+    "favicon.ico"
+  ],
+  
+  "lint": {
+    "rules": [ "polymer-2" ]
+  },
+  
+  "builds": [
+    { "preset": "es6-unbundled" }
+  ]
+  
+}

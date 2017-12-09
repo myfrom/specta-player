@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=no">
+
+    <title>Specta Player</title>
+    <meta name="description" content="An easy way to play audio on your spectacles">
+    
+    <meta name="theme-color" content="#009688">
+
+    <link rel="manifest" href="manifest.json">
+
+    <script src="bower_components/webcomponentsjs/webcomponents-loader.js" async></script>
+    <link rel="import" href="src/sp-shell.html">
+    
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110620543-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+    
+      gtag('config', 'UA-110620543-1');
+    </script>
+    
+    <style>
+    
+      body, html {
+        background: white;
+        margin: 0;
+        width: 100vw;
+        min-height: 100vh;
+        font-family: 'Roboto', 'Noto', 'Arial', sans-serif;
+        overflow-x: hidden;
+      }
+      
+      #circle {
+        background-color: #e0e0e0;
+        border-radius: 50%;
+        max-height: 700px;
+        max-width: 700px;
+        width: 70vw;
+        height: 70vw;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: border 160ms ease-in-out, background 160ms;
+        border: 0 solid rgba(0,150,136,0.5);
+      }
+      
+      #loader-placeholder {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: 0;
+        overflow: hidden;
+      }
+      
+      #circle.loading {
+        animation-name: blow-up;
+        animation-duration: 3s;
+        animation-timing-function: cubic-bezier(0.4, 0.0, 0.6, 1);;
+        animation-iteration-count: infinite;
+      }
+      
+      #circle.finishingAnimation {
+        transition: transform 230ms ease-in;
+      }
+      
+      @keyframes blow-up {
+        0% {
+          transform: scale(1);
+        }
+        
+        50% {
+          transform: scale(1.2);
+        }
+        
+        100% {
+          transform: scale(1);
+        }
+      }
+      
+      .hidden {
+        display: none !important;
+      }
+      
+      #circle.noidb {
+        background-color: #ffcdd2;
+        color: #b71c1c;
+        font-family: 'Roboto', 'Noto', 'Arial', sans-serif;
+      }
+      
+      #circle.noidb:after {
+        content: "Your browser doesn't support IdenxedDB :(";
+      }
+      
+      #circle > #uploadIcon {
+        transition: opacity 160ms;
+        height: 50%;
+        width: 50%;
+        opacity: 0;
+      }
+      
+      #circle > #uploadIcon.show {
+        opacity: 0.7;
+      }
+      
+      #circle[tabindex="0"]:hover {
+        background-color: #bdbdbd;
+      }
+      
+      #circle:focus {
+        outline: none;
+        border: 10px solid rgba(0,150,136,0.5);
+        background-clip: content-box;
+      }
+      
+      sp-shell {
+        width: 100vw;
+        min-height: 100vh;
+      }
+      
+      input[type="file"] {
+        display: none;
+      }
+      
+    </style>
+    <noscript>
+      <style>
+        
+        #circle {
+          background-color: #ffcdd2;
+          color: #b71c1c;
+          font-family: 'Roboto', 'Noto', 'Arial', sans-serif;
+        }
+        
+      </style>
+    </noscript>
+    
+  </head>
+  <body>
+    <div id="loader-placeholder">
+      <div id="circle">
+        <noscript><span>This app requires JavaScript to run</span></noscript>
+      </div>
+    </div>
+    
+    <!-- Yes, this script tag must be placed here -->
+    <script>
+      const circle = document.getElementById('circle');
+      
+      // Add loading animation
+      circle.classList.add('loading');
+      
+      function importHref(src) {
+        return new Promise((resolve, reject) => {
+          const link = document.createElement('link');
+          link.setAttribute('rel', 'import');
+          link.setAttribute('href', src);
+          link.onload = resolve;
+          link.onerror = reject;
+          document.head.appendChild(link);
+        });
+      }
+      
+      async function finishAnimation(skipLoader = false) {
+        const circlePos = circle.getBoundingClientRect();
+        const resizeStroke = () => {
+          const spinner = document.getElementById('spinner');
+          const size = spinner.getBoundingClientRect().width;
+          spinner.children[0].style.strokeWidth = 660 / size + 'px';
+        };
+        if (!skipLoader) {
+          const spinnerHTML =
+          `<svg id="spinner" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+             <circle class="path" fill="none" cx="33" cy="33" r="31.5"></circle>
+          </svg>`;
+          circle.insertAdjacentHTML('beforeend', spinnerHTML);
+          window.addEventListener('resize', resizeStroke);
+          resizeStroke();
+          await uploaderLoaded();
+        }
+        if (!skipLoader) window.removeEventListener('resize', resizeStroke);
+        circle.classList.add('finishingAnimation');
+        const radius = circlePos.width / 2;
+        const scale = Math.sqrt(Math.pow(circlePos.top + radius, 2) + Math.pow(circlePos.left + radius, 2)) / radius;
+        doubleRAF(() => {
+          circle.style.transform = 'scale(' + scale + ')';
+          setTimeout(() => {
+            document.querySelector('sp-shell').classList.remove('hidden')
+            circle.parentElement.remove();
+            document.body.style.backgroundColor = '#e0e0e0';
+          }, 230);
+        });
+        if (skipLoader) window.dispatchEvent(new CustomEvent('openplayerconsole'));
+      }
+      
+      function uploaderLoaded() {
+        return new Promise(r => window.addEventListener('spuploadloaded', r));
+      }
+      
+      function uploadFiles(e) {
+        circle.blur();
+        const input = document.createElement('input'),
+              audioTester = new Audio();
+        input.type = 'file';
+        input.multiple = true;
+        input.accept = 'audio/mpeg,audio/flac/,audio/ogg,audio/webm,.mp3,.json';
+        input.addEventListener('change', e => {
+          document.querySelector('#circle > svg').classList.remove('show');
+          const files = e.target.files;
+          const validFiles = Array.from(files).filter(file => {
+            if (audioTester.canPlayType(file.type)) {
+              console.log('Audio file received');
+              return true;
+            } else if (file.name.match(/\.json$/)) {
+              console.log('JSON object received');
+              return true;
+            } else {
+              console.log('Invalid file received');
+              Notifier.showToast('You uploaded invalid file');
+              return false;
+            }
+          });
+          if (validFiles.length) {
+            document.querySelector('#circle > #uploadIcon').remove();
+            circle.removeEventListener('click', uploadFiles);
+            finishAnimation();
+            document.querySelector('sp-shell').readFiles(validFiles);
+          } else document.querySelector('#circle > #uploadIcon').classList.add('show');
+          Array.from(document.querySelectorAll('input[type="file"]')).forEach(item => item.remove());
+        });
+        document.body.appendChild(input);
+        input.click();
+      }
+      
+      function doubleRAF(func) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(func);
+        });
+      }
+    
+      // Play animation when everything is ready
+      window.addEventListener('shellready', async e => {
+        const svgFetch = await fetch('images/upload.svg');
+        const svg = svgFetch.text();
+        const removeAnimation = async () => {
+                circle.classList.remove('loading');
+                if (e.detail.noData) {
+                  svgHTML = await svg;
+                  circle.insertAdjacentHTML('beforeend', svgHTML);
+                  doubleRAF(() => document.querySelector('#circle > #uploadIcon').classList.add('show'));
+                  circle.addEventListener('click', uploadFiles);
+                  circle.addEventListener('keydown', e => {
+                    if (e.keyCode === 13 || e.keyCode === 32) uploadFiles(e);
+                  });
+                  circle.tabIndex = 0;
+                  circle.focus();
+                } else {
+                  finishAnimation(true);
+                }
+                circle.removeEventListener('animationiteration', removeAnimation);
+              };
+        circle.addEventListener('animationiteration', removeAnimation);
+      }, { once: true });
+      
+      // Show error when IDB is unavailable
+      window.addEventListener('idbcheckfail', e => {
+        const removeAnimation = () => {
+                circle.classList.remove('loading');
+                circle.classList.add('noidb');
+                circle.removeEventListener('animationend', removeAnimation);
+              };
+        circle.addEventListener('animationiteration', removeAnimation);
+      }, { once: true });
+      
+      // Load Notifier asyncronously
+      importHref('src/notifier.html');
+    </script>
+    
+    <sp-shell class="hidden"></sp-shell>
+    
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:600|Roboto:400,500" rel="stylesheet">
+    <link href="loader.css" rel="stylesheet">
+  </body>
+</html>

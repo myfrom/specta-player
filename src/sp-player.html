@@ -1,0 +1,248 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
+<link rel="import" href="sharedicons.html">
+
+<dom-module id="sp-player">
+  <template>
+    <style>
+    
+      :host {
+        display: inline-block;
+      }
+      
+      paper-button {
+        width: 100%;
+        color: #009688;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 600 !important;
+        text-transform: none;
+        justify-content: start;
+        flex-wrap: wrap;
+        margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        border: 1px solid rgba(0, 150, 136, 0.32);
+        background: none;
+        transition: background 160ms;
+      }
+      
+      paper-button:focus {
+        background: #E0F2F1;
+      }
+      
+      #btnName {
+        flex: 1;
+      }
+      
+      iron-icon {
+        opacity: 0.32;
+      }
+      
+      #progress {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 1px;
+        background-color: rgba(0,150,136,0.12);
+        /*transition: transform;*/
+        transform-origin: left;
+      }
+      
+      #songName {
+        opacity: 0.5;
+        width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-family: 'Roboto', sans-serif;
+        font-weight: 400 !important;
+      }
+      
+      #player {
+        display: none;
+      }
+      
+    </style>
+    
+    <paper-button on-tap="_togglePlay" id="btn" toggles>
+      <div id="progress"></div>
+      <span id="btnName"><slot></slot></span>
+      <iron-icon icon="sharedicons:[[_computeIcon(_playing)]]"></iron-icon>
+      <span id="songName">[[song]]</span>
+    </paper-button>
+    
+    <audio loop="[[loop]]" id="player" src="[[_getSong(song)]]"></audio>
+  </template>
+
+  <script>
+    class Player extends Polymer.Element {
+      
+      static get is() { return 'sp-player'; }
+      
+      static get properties() { return {
+        
+        song: String,
+        
+        index: {
+          type: Number,
+          reflectToAttribute: true
+        },
+        
+        _playing: {
+          type: Boolean,
+          value: false,
+          observer: '_notifyAboutPlayback'
+        },
+        
+        loop: {
+          type: Boolean,
+          value: false
+        },
+        
+        crossfade: {
+          type: Boolean,
+          value: false
+        }
+        
+      } }
+      
+      constructor() {
+        super();
+      }
+      
+      connectedCallback() {
+        super.connectedCallback();
+        
+        this.$.player.addEventListener('ended', () => this._playing = false);
+        
+        const dragCallbackStart = e => {
+          const currentX = e.x || e.touches[0].screenX,
+                currentY = e.y || e.touches[0].screenY;
+          this._initialDragCords = { x: currentX, y: currentY }
+        };
+        this.$.btn.addEventListener('mousedown', dragCallbackStart, { passive: true });
+        this.$.btn.addEventListener('touchstart', dragCallbackStart, { passive: true });
+        
+        const dragCallbackMove = e => {
+          if (!this._initialDragCords) return;
+          const currentX = e.x || e.touches[0].screenX,
+                currentY = e.y || e.touches[0].screenY,
+                xAxis = this._initialDragCords.x - currentX,
+                yAxis = this._initialDragCords.y - currentY;
+                if (Math.abs(xAxis) > Math.abs(yAxis)) {
+                  e.preventDefault();
+                  const percentage = xAxis/200,
+                        player = this.$.player,
+                        duration = player.duration,
+                        currentTime = player.currentTime;
+                  let skipTo = currentTime - duration * percentage;
+                  if (skipTo > duration) skipTo = duration;
+                  if (skipTo < 0) skipTo = 0;
+                  this._skipTo = skipTo;
+                  requestAnimationFrame(() => {
+                    const width = this.$.btn.getBoundingClientRect().width;
+                    this.$.progress.style.transform = `scaleX(${Math.round(this._skipTo / duration * width)}`;
+                  });
+                  console.log(skipTo);
+                }
+        };
+        this.$.btn.addEventListener('mousemove', dragCallbackMove);
+        this.$.btn.addEventListener('touchmove', dragCallbackMove);
+        
+        const dragCallbackEnd = e => {
+          if (this._skipTo) {
+            const player = this.$.player,
+                  duration = player.duration;
+            console.log('Finished', this._skipTo);
+            player.currentTime = this._skipTo;
+            requestAnimationFrame(() => {
+              const width = this.$.btn.getBoundingClientRect().width;
+              this.$.progress.style.transform = `scaleX(${Math.round(this._skipTo / duration * width)}`;
+              this._skipTo = this._initialDragCords = null;
+            });
+          }
+        };
+        window.addEventListener('mouseup', dragCallbackEnd, { passive: true });
+        window.addEventListener('touchend', dragCallbackEnd, { passive: true });
+      }
+      
+      _computeIcon(playing) {
+        return playing ? 'pause' : 'play';
+      }
+      
+      _getSong(song) {
+        return window._audio[song];
+      }
+      
+      _togglePlay() {
+        const player = this.$.player;
+        if (this._playing) {
+          this._playStatus.then(async () => {
+            if (this.crossfade)
+              await this._fadeOutAudio(player);
+            player.pause();
+            this._playing = false;
+          });
+        } else {
+          player.volume = this.crossfade ? 0 : 1;
+          this._playStatus = player.play();
+          this._playing = true;
+          if (this.crossfade) this._fadeInAudio(player);
+          
+          const duration = player.duration,
+                width = this.$.btn.getBoundingClientRect().width,
+                callback = () => {
+                  const currentTime = player.currentTime;
+                  this.$.progress.style.transform = `scaleX(${Math.round(currentTime / duration * width)}`;
+                  if (this._playing) requestAnimationFrame(callback);
+                };
+          requestAnimationFrame(callback);
+        }
+      }
+      
+      _notifyAboutPlayback(state) {
+        this.dispatchEvent(new CustomEvent('audio' + (state ? 'played' : 'paused'),
+          { bubbles: true, composed: true, detail: this.index }));
+      }
+      
+      _fadeInAudio(player) {
+        return new Promise(r => {
+          let i = 20;
+          player.volume = 0;
+          const interval = setInterval(() => {
+            player.volume = (player.volume * 100 + 5) / 100;
+            i--;
+            if (i <= 0) {
+              player.volume = 1;
+              clearInterval(interval);
+              r();
+            }
+          }, 100);
+        });
+      }
+      
+      _fadeOutAudio(player) {
+        return new Promise(r => {
+          let i = 20;
+          player.volume = 1;
+          const interval = setInterval(() => {
+            player.volume = (player.volume * 100 - 5) / 100;
+            i--;
+            if (i <= 0) {
+              player.volume = 0;
+              clearInterval(interval);
+              r();
+            }
+          }, 100);
+        });
+      }
+      
+    }
+
+    customElements.define(Player.is, Player);
+  </script>
+</dom-module>

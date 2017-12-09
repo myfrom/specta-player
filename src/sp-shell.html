@@ -1,0 +1,233 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
+
+<dom-module id="sp-shell">
+  <template>
+    <style>
+    
+      :host {
+        display: block;
+        background-color: #e0e0e0;
+        height: 100%;
+        min-height: 100vh;
+      }
+      
+      .hidden {
+        display: none;
+      }
+      
+      .opening, .closing {
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+      }
+      
+    </style>
+    
+    <sp-upload id="upload" class="first-open" data="{{_config}}"></sp-upload>
+    <sp-console id="console" class="hidden first-open" data="[[_config]]"></sp-console>
+    
+  </template>
+
+  <script>
+    class Shell extends Polymer.Element {
+      
+      static get is() { return 'sp-shell'; }
+      
+      static get properties() { return {
+        
+        _config: Array,
+        
+        _opened: {
+          type: String,
+          value: 'upload'
+        }
+        
+      } }
+      
+      constructor() {
+        super();
+      }
+      
+      connectedCallback() {
+        super.connectedCallback();
+        
+        window.addEventListener('openspconsole', this.openConsole.bind(this));
+        window.addEventListener('openspupload', this.openUploader.bind(this));
+        
+        this.addEventListener('cleardatabase', async () => {
+          this.set('_config', []);
+          window._audio = {};
+          await this._saveData('audioFiles', {});
+          await this._saveData('config', []);
+          location.reload();
+        });
+        
+        if (!window.indexedDB) {
+          dispatchEvent(new CustomEvent('idbcheckfail'));
+          return;
+        }
+        
+        this._config = [];
+        
+        this.setupIDB().then(() => {
+          // Set error handler
+          db.onerror = e => console.error;
+          
+          // Check for currently set projects
+          let dispatchedEvent = false;
+          db.transaction('config').objectStore('config').openCursor().onsuccess = e => {
+            const cursor = e.target.result;
+            if (cursor) {
+              // Load the data and dispatch ready event
+              this._config[Number(cursor.key)] = cursor.value;
+              cursor.continue();
+              if (!dispatchedEvent) {
+                this._getAudio().then(e => dispatchEvent(new CustomEvent('shellready', { detail: { noData: false } })));
+                this.openConsole({ isDataSaved: true });
+                dispatchedEvent = true;
+              }
+            } else if (Object.keys(this._config).length === 0) {
+              // Dispatch event saying that app needs data
+              dispatchEvent(new CustomEvent('shellready', { detail: { noData: true } }));
+            }
+          };
+        });
+      }
+      
+      setupIDB() {
+        return new Promise(r => {
+          const request = indexedDB.open('AppData', 1);
+          request.onsuccess = e => { window.db = e.target.result; r(); };
+          request.onerror = e => console.log;
+          request.onupgradeneeded = e => {
+            window.db = e.target.result;
+            db.createObjectStore('config');
+            db.createObjectStore('audioFiles');
+          };
+        });
+      }
+      
+      async openUploader() {
+        if (this._opened = 'console' && typeof PlayerConsole !== 'undefined') this.$.console.close();
+        if (typeof Uploader === 'undefined') await this._importSrc('sp-upload');
+        this.$.upload.open();
+        this._opened = 'upload';
+        this.$.console.classList.remove('first-open');
+      }
+      
+      async openConsole(e) {
+          if (this._opened = 'upload' && typeof Uploader !== 'undefined') this.$.upload.close();
+          if (typeof PlayerConsole === 'undefined') await this._importSrc('sp-console');
+          this.$.console.open();
+          this._opened = 'console';
+          if (!e.isDataSaved) this._saveData('config', this._config);
+        }
+      
+      async readFiles(files) {
+        window._audio = window._audio || {};
+        this._config = this._config || [];
+        const awaitingReads = [];
+        files.forEach(file => {
+          const reader = new FileReader();
+          if (file.type.match(/^audio/)) {
+            awaitingReads.push(new Promise(r => {
+              reader.onload = e => {
+                if (window._audio[file.name]) {
+                  let i = 1;
+                  while (window._audio[file.name + ' (' + i + ')']) i++;
+                  window._audio[file.name + ' (' + i + ')'] = e.target.result;
+                  this._broadcastFileAdded(file.name + ' (' + i + ')');
+                } else {
+                  window._audio[file.name] = e.target.result;
+                  this._broadcastFileAdded(file.name);
+                }
+                r();
+              };
+              reader.readAsDataURL(file);
+            }));
+          } else {
+            awaitingReads.push(new Promise(r => {
+              reader.onload = e => {
+                this._readConfigFromFile(e.target.result);
+                r();
+              };
+              reader.readAsText(file);
+            }));
+          }
+        });
+        await Promise.all(awaitingReads);
+        if (!this._config.length) {
+          this._config = this._config || [];
+          Object.keys(window._audio).forEach(key =>
+            this._config.push({ type: 'audio', name: key.match(/(.+)\..[^\.]+$/)[1], song: key }));
+          this.notifySplices('_config');
+        }
+        if (this.$.upload.classList.contains('hidden') || this.$.upload.classList.contains('first-open'))
+          this.openUploader();
+        this._saveData('audioFiles', window._audio);
+      }
+      
+      _getAudio() {
+        window._audio = window._audio || {};
+        return new Promise(r => {
+          db.transaction('audioFiles').objectStore('audioFiles').openCursor().onsuccess = e => {
+            const cursor = e.target.result;
+            if (cursor) {
+              window._audio[cursor.key] = cursor.value;
+              cursor.continue();
+            } else r();
+          };
+        });
+      }
+      
+      _readConfigFromFile(jsonFile) {
+        const parsed = JSON.parse(jsonFile);
+        const isValid = object => {
+          try {
+            return object.type === 'SpectaPlayerConfigJSON-rev1' && typeof object.audio === 'object'
+              && typeof object.order === 'object' ? true : false;
+          } catch(err) {
+            console.log('Invalid JSON provided');
+            return false;
+          }
+        };
+        if (isValid(parsed)) {
+          Object.keys(parsed.audio).forEach(key => {
+            window._audio[key] = parsed.audio[key];
+          });
+          this._config = parsed.order;
+        }
+      }
+      
+      async _saveData(database, data) {
+        const dataKeys = Object.keys(data);
+        const objectStore = db.transaction(database, 'readwrite').objectStore(database);
+        const putItem = (key, value) => new Promise(r => objectStore.put(value, key).onsuccess = r);
+        const removeEverything = key => new Promise(r => objectStore.clear().onsuccess = r);
+        
+        // Remove old values
+        await removeEverything();
+        
+        // Write new values
+        dataKeys.forEach(async key => {
+          const value = data[key];
+          await putItem(key, value);
+        });
+      }
+      
+      _importSrc(name) {
+        return importHref(`src/${name}.html`);
+      }
+      
+      _broadcastFileAdded(fileName) {
+        const detail = { type: 'audio', song: fileName, name: fileName.match(/(.+)\..[^\.]+$/)[1] };
+        this.dispatchEvent(new CustomEvent('fileadded', { detail }));
+      }
+      
+    }
+
+    customElements.define(Shell.is, Shell);
+  </script>
+</dom-module>

@@ -1,0 +1,80 @@
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../bower_components/neon-animation/web-animations.html">
+
+<link rel="import" href="../bower_components/neon-animation/animations/fade-in-animation.html">
+<link rel="import" href="../bower_components/neon-animation/animations/fade-out-animation.html">
+<link rel="import" href="../bower_components/neon-animation/animations/slide-from-bottom-animation.html">
+<link rel="import" href="../bower_components/neon-animation/animations/slide-down-animation.html">
+
+<script>
+  
+  window.Notifier = {
+    
+    showToast(msg) {
+      if (!msg) throw new Error('Provided empty toast message!');
+      const toast = document.createElement('paper-toast');
+      if (window.innerWidth <= 960) toast.classList.add('fit-bottom');
+      toast.text = msg;
+      document.body.appendChild(toast);
+      toast.addEventListener('opened-changed', e => {
+        if (!e.detail.value) setTimeout(() => e.target.remove(), 500);
+      });
+      toast.open();
+    },
+    
+    askDialog(msg = 'Are you sure?', options = {}) {
+      return new Promise((resolve, reject) => {
+        const dialog = document.createElement('paper-dialog');
+        const innerMsg = options.innerMsg || '',
+              cancelText = options.cancelText || 'No',
+              acceptText = options.acceptText || 'Yes',
+              target = options.target || document.body;
+        dialog.innerHTML =
+          `<h2>${msg}</h2>
+          <paper-dialog-scrollable>
+            ${innerMsg}
+          </paper-dialog-scrollable>
+          <div class="buttons">
+            <paper-button dialog-dismiss>${cancelText}</paper-button>
+            <paper-button dialog-confirm autofocus>${acceptText}</paper-button>
+          </div>`;
+          if (!options.noAnimations) {
+            dialog.animationConfig = options.animationConfig || {
+              'entry': [{
+                name: 'slide-from-bottom-animation',
+                timing: { easing: 'ease-out', duration: 160 },
+                node: dialog
+              },{
+                name: 'fade-in-animation',
+                timing: { easing: 'ease-out', duration: 160 },
+                node: dialog
+              }],
+              'exit': [{
+                name: 'slide-down-animation',
+                timing: { easing: 'ease-in', duration: 160 },
+                node: dialog
+              },{
+                name: 'fade-out-animation',
+                timing: { easing: 'ease-in', duration: 160 },
+                node: dialog
+              }]
+            }
+          }
+          if (!options.noBackground) {
+            dialog.withBackdrop = true;
+          }
+          dialog.addEventListener('iron-overlay-closed', e => {
+            if (e.detail.confirmed)
+              resolve();
+            else
+              reject({ error: false, canceledDialog: true });
+          });
+        target.appendChild(dialog);
+        dialog.open();
+      });
+    }
+    
+  }
+</script>

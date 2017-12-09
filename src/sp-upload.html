@@ -1,0 +1,382 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/iron-iconset-svg/iron-iconset-svg.html">
+
+<link rel="import" href="../bower_components/vaadin-grid/vaadin-grid.html">
+<link rel="import" href="../bower_components/vaadin-grid/vaadin-grid-column.html">
+
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-tooltip/paper-tooltip.html">
+
+<link rel="import" href="../bower_components/neon-animation/web-animations.html">
+
+<link rel="import" href="sp-preview-player.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="sharedicons.html">
+<link rel="import" href="notifier.html">
+
+<iron-iconset-svg size="24" name="uploader">
+<svg><defs>
+<g id="label"><path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"></path></g>
+<g id="audio"><path d="M12 3v9.28c-.47-.17-.97-.28-1.5-.28C8.01 12 6 14.01 6 16.5S8.01 21 10.5 21c2.31 0 4.2-1.75 4.45-4H15V6h4V3h-7z"></path></g>
+<g id="done"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></g>
+<g id="move-down"><path d="M7.41 7.84L12 12.42l4.59-4.58L18 9.25l-6 6-6-6z"></path></g>
+<g id="move-up"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path></g>
+<g id="delete"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></g>
+<g id="add-audio"><path d=" M 3 5 L 3 2 L 5 2 L 5 5 L 8 5 L 8 7 L 5 7 L 5 10 L 3 10 L 3 7 L 0 7 L 0 5 L 3 5 Z  M 12 3 L 12 12.28 C 11.53 12.11 11.03 12 10.5 12 C 8.01 12 6 14.01 6 16.5 C 6 18.99 8.01 21 10.5 21 C 12.81 21 14.7 19.25 14.95 17 L 15 17 L 15 6 L 19 6 L 19 3 L 12 3 Z "/></g>
+<g id="add-label"><path d=" M 17.63 5.84 C 17.27 5.33 16.67 5 16 5 L 9 5 L 9 8 L 6 8 L 6 11 L 3 11 L 3 17 C 3 18.1 3.9 18.99 5 18.99 L 16 19 C 16.67 19 17.27 18.67 17.63 18.16 L 22 12 L 17.63 5.84 Z  M 3 5 L 3 2 L 5 2 L 5 5 L 8 5 L 8 7 L 5 7 L 5 10 L 3 10 L 3 7 L 0 7 L 0 5 L 3 5 Z "/></g>
+</defs></svg>
+</iron-iconset-svg>
+
+<dom-module id="sp-upload">
+  <template>
+    <style include="shared-styles">
+      
+      @keyframes slide-out {
+        
+        0% {
+          opacity: 1;
+          transform: none;
+        }
+        
+        70% {
+          opacity: 0;
+        }
+        
+        100% {
+          opacity: 0;
+          transform: translateX(-100%);
+        }
+        
+      }
+      
+      @keyframes slide-in {
+        
+        0% {
+          opacity: 0;
+          transform: translateX(-100%);
+        }
+        
+        70% {
+          opacity: 1;
+        }
+        
+        100% {
+          opacity: 1;
+          transform: none;
+        }
+        
+      }
+      
+      #headerPlaceholder > paper-icon-button {
+        color: #009688;
+        height: 48px;
+        width: 48px;
+        margin-right: 14px;
+      }
+      
+      vaadin-grid .action-icon {
+        padding: 5px;
+        height: 28px;
+        width: 28px;
+      }
+      
+      vaadin-grid .type-icon {
+        width: 23px;
+        height: 23px;
+      }
+      
+      vaadin-grid .cell[i="0"] .action-icon[icon="uploader:move-up"] {
+        opacity: 0.38;
+      }
+      
+      vaadin-grid vaadin-grid-cell-content:last-of-type .action-icon[icon="uploader:move-down"] {
+        opacity: 0.38;
+      }
+      
+      vaadin-grid .cell.left {
+        text-align: end;
+      }
+      
+      .accent-icons paper-icon-button {
+        color: #009688;
+      }
+      
+      #labelDialog, paper-input {
+        --primary-color: #009688;
+        --paper-input-container-color: #cccccc;
+      }
+      
+      /* Copied from Vaadin docs */
+      vaadin-grid {
+        height: unset;
+        border: none;
+        font-family: Roboto, sans-serif;
+        --divider-color: rgba(0, 0, 0, 0.12);
+
+        --vaadin-grid-cell: {
+          padding: 5;
+        };
+
+        --vaadin-grid-header-cell: {
+          height: 64px;
+          color: rgba(0, 0, 0, 0.54);
+          font-size: 12px;
+        };
+
+        --vaadin-grid-body-cell: {
+          height: 48px;
+          color: rgba(0, 0, 0, 0.87);
+          font-size: 13px;
+        };
+
+        --vaadin-grid-body-row-hover-cell: {
+          background-color: #eeeeee;
+        };
+
+        --vaadin-grid-body-row-selected-cell: {
+          background-color: #f5f5f5;
+        };
+
+        --vaadin-grid-focused-cell: {
+          box-shadow: none;
+          font-weight: bold;
+        };
+      }
+
+      vaadin-grid .cell:not(.short) {
+        overflow: hidden;
+        box-sizing: border-box;
+        text-overflow: ellipsis;
+        padding-right: 20px;
+      }
+      
+      vaadin-grid .cell.short {
+        padding: 0 5px;
+      }
+
+      vaadin-grid .cell.last {
+        padding-right: 24px;
+      }
+
+      vaadin-grid .cell.numeric {
+        text-align: right;
+      }
+      
+    </style>
+    
+    <div id="headerPlaceholder">
+      <h2 class="header">Upload your audio</h2>
+      <paper-icon-button icon="uploader:done" id="proceedBtn" on-tap="_sendCloseEvent"></paper-icon-button>
+      <paper-tooltip for="proceedBtn" offset="4" position="left">Save</paper-tooltip>
+    </div>
+    
+    <div class="card">
+      <vaadin-grid items="{{data}}">
+        <vaadin-grid-column width="40px" flex-grow="0">
+          <template>
+            <div class="cell short">
+              <iron-icon class="type-icon" icon="uploader:[[item.type]]"></iron-icon>
+            </div>
+          </template>
+        </vaadin-grid-column>
+        <vaadin-grid-column width="calc(70% - 170px)">
+          <template class="header">
+            <div class="cell">Name</div>
+          </template>
+          <template>
+            <div class="cell"><paper-input no-label-float value="{{item.name}}"></paper-input></div>
+          </template>
+        </vaadin-grid-column>
+        <vaadin-grid-column width="calc(30% - 170px)">
+          <template class="header">
+            <div class="cell short">File</div>
+          </template>
+          <template>
+            <div class="cell short">
+              <template is="dom-if" if="[[_isItemAudio(item.type)]]">
+                [[item.song]]
+              </template>
+            </div>
+          </template>
+        </vaadin-grid-column>
+        <vaadin-grid-column width="130px" flex-grow="0">
+          <template class="header">
+            <div class="cell short left accent-icons">
+              <paper-icon-button icon="uploader:add-audio" on-tap="_addAudio"></paper-icon-button>
+              <paper-icon-button icon="uploader:add-label" on-tap="_addLabel"></paper-icon-button>
+            </div>
+          </template>
+          <template>
+            <div class="cell short left" i$="[[index]]">
+              <template is="dom-if" if="[[_isItemAudio(item.type)]]">
+                <sp-preview-player song="[[item.song]]"></sp-preview-player>
+              </template>
+              <paper-icon-button class="action-icon" on-tap="_moveItemUp" icon="uploader:move-up"></paper-icon-button>
+              <paper-icon-button class="action-icon" on-tap="_moveItemDown" icon="uploader:move-down"></paper-icon-button>
+              <paper-icon-button class="action-icon" on-tap="_deleteItem" icon="uploader:delete"></paper-icon-button>
+            </div>
+          </template>
+        </vaadin-grid-column>
+      </vaadin-grid>
+    </div>
+    
+    <paper-dialog id="labelDialog">
+      <h2>Add label</h2>
+      <paper-input autofocus no-label-float label="Write header"></paper-input>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Cancel</paper-button>
+        <paper-button dialog-confirm>Create</paper-button>
+      </div>
+    </paper-dialog>
+  </template>
+
+  <script>
+    class Uploader extends Polymer.Element {
+      
+      static get is() { return 'sp-upload'; }
+      
+      static get properties() { return {
+        
+        data: {
+          type: Array,
+          notify: true
+        }
+        
+      } }
+      
+      constructor() {
+        super();
+        
+        this._reactToKeys = e => {
+          if (e.keyCode === 76) this._addLabel();
+          if (e.keyCode === 65) this._addAudio();
+        };
+      }
+      
+      connectedCallback() {
+        super.connectedCallback();
+        
+        this.$.proceedBtn.addEventListener('contextmenu', e => e.preventDefault());
+        
+        window.dispatchEvent(new CustomEvent('spuploadloaded'));
+      }
+      
+      close() {
+        window.removeEventListener('keydown', this._reactToKeys);
+        
+        this.classList.add('closing');
+        setTimeout(() => { this.classList.remove('closing'); this.classList.add('hidden'); }, 360);
+      }
+      
+      _sendCloseEvent() {
+        window.dispatchEvent(new CustomEvent('openspconsole'));
+        this.notifySplices('data');
+      }
+      
+      open() {
+        window.addEventListener('keydown', this._reactToKeys);
+        
+        if (this.classList.contains('first-open')) {
+          this.classList.remove('first-open');
+        } else {
+          this.classList.add('opening');
+          this.classList.remove('hidden');
+          setTimeout(() => this.classList.remove('opening'), 360);
+        }
+      }
+      
+      _addAudio() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.multiple = true;
+        input.accept = 'audio/*';
+        input.addEventListener('change', e => {
+          const files = e.target.files;
+          const shell = document.querySelector('sp-shell');
+          const audioTester = new Audio();
+          const validFiles = Array.from(files).filter(file => {
+            if (audioTester.canPlayType(file.type)) {
+              console.log('Audio file received');
+              return true;
+            } else if (file.name.match(/\.json$/)) {
+              console.log('JSON object received');
+              return true;
+            } else {
+              console.log('Invalid file received');
+              Notifier.showToast('You uploaded invalid file');
+              return false;
+            }
+          });
+          shell.addEventListener('fileadded', e => {
+            if (!this.data.filter(item => (item.song === e.detail.song)).length)
+              this.push('data', e.detail);
+          });
+          shell.readFiles(validFiles);
+          Array.from(document.querySelectorAll('input[type="file"]')).forEach(item => item.remove());
+        });
+        document.body.appendChild(input);
+        input.click();
+      }
+      
+      _addLabel() {
+        const dialog = this.$.labelDialog;
+        const keypressListener = e => {
+          if (e.keyCode == 13) dialog.querySelector('[dialog-confirm]').click();
+        };
+        const closeListener = e => {
+          if (e.detail.confirmed) {
+            const input = dialog.querySelector('paper-input')
+            const labelName = input.value;
+            if (labelName) {
+              this.push('data', {
+                type: 'label',
+                name: labelName
+              });
+            }
+            input.value = '';
+          }
+          dialog.removeEventListener('iron-overlay-closed', closeListener);
+          dialog.removeEventListener('keypress', keypressListener);
+        };
+        dialog.addEventListener('iron-overlay-closed', closeListener);
+        dialog.addEventListener('keypress', keypressListener);
+        dialog.open();
+      }
+      
+      _isItemAudio(type) {
+        return type === 'audio';
+      }
+      
+      _moveItemUp(e) {
+        const index = Number(e.target.parentElement.getAttribute('i'));
+        if (index === 0) return;
+        const item = this.data.splice(index, 1)[0];
+        this.data.splice(index - 1, 0, item);
+        this.notifySplices('data');
+      }
+      
+      _moveItemDown(e) {
+        const index = Number(e.target.parentElement.getAttribute('i'));
+        if (index === this.data.length - 1) return;
+        const item = this.data.splice(index, 1)[0];
+        this.data.splice(index + 1, 0, item);
+        this.notifySplices('data');
+      }
+      
+      _deleteItem(e) {
+        const index = Number(e.target.parentElement.getAttribute('i'));
+        const item = this.data.splice(index, 1)[0];
+        delete window._audio[item.song];
+        this.notifySplices('data');
+      }
+      
+    }
+
+    customElements.define(Uploader.is, Uploader);
+  </script>
+</dom-module>
