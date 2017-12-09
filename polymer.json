@@ -20,7 +20,10 @@
     "manifest.json",
     "bower_components/webcomponentsjs/webcomponents-lite.js",
     "loader.css",
-    "images/icons/*.*",
+    "images/icons/48.png",
+    "images/icons/144.png",
+    "images/icons/192.png",
+    "images/icons/svg.svg",
     "images/upload.svg",
     "favicon.ico"
   ],
@@ -30,7 +33,7 @@
   },
   
   "builds": [
-    { "preset": "es6-unbundled" }
+    { "preset": "es6-bundled" }
   ]
   
 }
