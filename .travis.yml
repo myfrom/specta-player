@@ -16,6 +16,6 @@ deploy:
   provider: pages
   skip_cleanup: true
   github_token: $GITHUB_TOKEN
-  local_dir: build/es6-bundled/
+  local_dir: build/production/
   on:
     branch: master

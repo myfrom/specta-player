@@ -33,7 +33,11 @@
   },
   
   "builds": [
-    { "preset": "es6-bundled" }
+    {
+      "name": "production",
+      "preset": "es6-bundled",
+      "swPrecacheConfig": "sw-precache-config.js"
+    }
   ]
   
 }
