@@ -1,0 +1,21 @@
+sudo: enabled
+language: node_js
+node: stable
+
+install:
+ - npm install -g polymer-cli bower
+ - bower install 
+
+script:
+ - echo 'No tests yet'
+
+before_deploy:
+ - polymer build
+
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: $GITHUB_TOKEN
+  local_dir: build/es6-bundled/
+  on:
+    branch: master
