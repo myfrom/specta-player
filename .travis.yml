@@ -1,6 +1,6 @@
 sudo: enabled
 language: node_js
-node: stable
+node_js: stable
 
 install:
  - npm install -g polymer-cli bower
