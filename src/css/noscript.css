@@ -1,0 +1,16 @@
+#circle {
+  background-color: #ffcdd2;
+  color: #b71c1c;
+  font-family: 'Montserrat', 'Roboto', 'Noto', 'Arial', sans-serif;
+  font-size: 20px;
+  animation: none;
+}
+
+#circle::after {
+  content: "This app requires JavaScript to run";
+  text-align: center;
+}
+
+#circle.no-idb::after {
+  content: "Your browser does not support Indexed DB :(";
+}
