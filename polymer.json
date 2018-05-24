@@ -11,32 +11,55 @@
   
   "sources": [
    "src/**/*",
-   "images/**/*",
-   "bower.json"
+   "images/**/*"
   ],
   
   "extraDependencies": [
+    "bower_components/webcomponentsjs/*",
     "manifest.json",
-    "bower_components/webcomponentsjs/webcomponents-lite.js",
-    "loader.css",
-    "images/icons/48.png",
-    "images/icons/144.png",
-    "images/icons/192.png",
-    "images/icons/svg.svg",
-    "images/upload.svg",
+    "src/**/*",
+    "images/**/*",
     "favicon.ico"
   ],
+
+  "betterPolymerBuild": {
+    "skipTypes": {
+      "js": true
+    },
+    "ignoredFiles": [
+      "src/src/**/*",
+      "src/sp-console.html_script_1.js"
+    ],
+    "sections": {
+      "src/js/index.js": {
+        "DEV-ANALYTICS-OVERWRITE": {
+          "action": "delete-in-between"
+        },
+        "SERVICE-WORKER": {
+          "action": "delete-tag"
+        }
+      },
+      "src/sp-console.html": {
+        "POLYMER-BUILD-FIX-CONSOLE": {
+          "action": "delete-in-between"
+        },
+        "POLYMER-BUILD-FIX-CONSOLE-PROPER": {
+          "action": "delete-tag"
+        }
+      },
+      "src/sp-upload.html": {
+        "POLYMER-BUILD-FIX-UPLOADER": {
+          "action": "delete-in-between"
+        },
+        "POLYMER-BUILD-FIX-UPLOADER-PROPER": {
+          "action": "delete-tag"
+        }
+      }
+    }
+  },
   
   "lint": {
     "rules": [ "polymer-2" ]
-  },
-  
-  "builds": [
-    {
-      "name": "production",
-      "preset": "es6-bundled",
-      "swPrecacheConfig": "sw-precache-config.js"
-    }
-  ]
+  }
   
 }

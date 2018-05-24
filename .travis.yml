@@ -3,19 +3,22 @@ language: node_js
 node_js: stable
 
 install:
- - npm install -g polymer-cli bower
- - bower install 
+ - npm install -g polymer-cli gulp
+ - polymer install 
 
 script:
  - echo 'No tests yet'
 
 before_deploy:
- - polymer build
+ - npm i -g bower
+ - npm install
+ - bower install
+ - npm run build
 
 deploy:
   provider: pages
   skip_cleanup: true
   github_token: $GITHUB_TOKEN
-  local_dir: build/production/
+  local_dir: build
   on:
     tags: true
