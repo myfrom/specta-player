@@ -6,8 +6,7 @@
   
   "fragments": [
     "src/sp-upload.html",
-    "src/sp-console.html",
-    "src/notifier.html"
+    "src/sp-console.html"
   ],
   
   "sources": [
