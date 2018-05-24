@@ -15,12 +15,13 @@
     
     <noscript id="lazy-load">
       <link rel="stylesheet" href="src/css/helper.css">
-      <link rel="import" href="src/notifier.html">
+      <link rel="import" href="bower_components/polymer/lib/utils/import-href.html">
+      <link rel="stylesheet" href="src/css/helper-desktop.css"
         media="(orientation: landscape) and (min-width: 601px), (orientation: portrait) and (min-width: 961px)">
       <link href="https://fonts.googleapis.com/css?family=Montserrat:600|Roboto:400,500" rel="stylesheet">
     </noscript>
     
-    <style>
+    <style is="custom-style">
     
       html {
         --main-font: 'Roboto', 'Noto', 'Halvetica', 'Arial', sans-serif;
@@ -94,6 +95,8 @@
         #uploadOverlay {
           display: none !important;
         }
+
+      }
       
       #circle.noidb {
         background-color: #ffcdd2;

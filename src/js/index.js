@@ -15,12 +15,12 @@ window.appState = {
 // Google Analytics
 setTimeout(() => {
   window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  /*::DEV-ANALYTICS-OVERWRITE*/
+  window.gtag = function(){dataLayer.push(arguments);}
+  /*::DEV-ANALYTICS-OVERWRITE::*/
   window.gtag = (...args) => {
     console.log('GTAG:', args);
   };
-  /*::DEV-ANALYTICS-OVERWRITE-END*/
+  /*::DEV-ANALYTICS-OVERWRITE-END::*/
   gtag('js', new Date());
   gtag('config', 'UA-110620543-1', { 'transport_type': navigator.sendBeacon ? 'beacon' : 'xhr' });
 }, 0);
@@ -95,18 +95,23 @@ setTimeout(() => {
 
 
 // Register Service Worker
-/*::SERVICE-WORKER (will be activated at build)
-navigator.serviceWorker.register('service-worker.js', { scope: '/specta-player/' })
+/*::SERVICE-WORKER:: (will be activated at build)
+navigator.serviceWorker.register('service-worker.js',
+  { scope: location.origin.includes('github') ? '/specta-player/' : '/' })
+  .then(() => navigator.serviceWorker.ready)
   .then(() => {
     const callback = () => {
-      Notifier.showToast('App can now work offline' + String.fromCodePoint('9881'));
+      const channel = new MessageChannel();
+      channel.port1.onmessage = e =>
+        e.data === 'sw-ready' && Notifier.showToast(`App can now work offline ⚙`);
+        navigator.serviceWorker.controller.postMessage('sw-update-question', [channel.port2]);
     };
-    if (!Notifier)
+    if (!('Notifier' in window))
       window.addEventListener('notifier-ready', callback, { once: true });
     else
       callback();
   });
-::SERVICE-WORKER-END*/
+::SERVICE-WORKER-END::*/
 
 
 // Load drag-n-drop if on desktop
@@ -129,8 +134,13 @@ setTimeout(() => {
 window.addEventListener('contextmenu', e => e.preventDefault());
 
 
-// Import Shell
-importHref('src/sp-shell.html');
+// Import Shell and Notifier
+importHref('src/sp-shell.html').then(() => {
+  const el = document.createElement('script');
+  el.setAttribute('src', 'bower_components/notifier/notifier.js');
+  el.setAttribute('async', true);
+  document.head.appendChild(el);
+});
 
 
 // Show error when IDB is unavailable
@@ -143,7 +153,7 @@ window.addEventListener('idb-check-fail', e => {
 
 
 // Do the loading dance
-// (() => {
+(() => {
   const circle = document.querySelector('#circle');
   
   let uploadIcon = null;
@@ -239,7 +249,7 @@ window.addEventListener('idb-check-fail', e => {
           return true;
         } else {
           console.log('Invalid file received');
-          Notifier.showToast('You uploaded invalid file ' + String.fromCodePoint('0x1F61F'));
+          Notifier.showToast(`You uploaded invalid file 😟`);
           return false;
         }
       });
@@ -267,4 +277,4 @@ window.addEventListener('idb-check-fail', e => {
     } else
       finishAnimation(true);
   }, { once: true });
-// })();
+})();
