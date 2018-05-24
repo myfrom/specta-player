@@ -1,0 +1,38 @@
+.toolbar {
+  padding-right: 20px;
+}
+paper-icon-button[icon="uploader:done"] {
+  display: block;
+}
+
+#card {
+  margin: 8px 0;
+}
+
+.table-left-icons {
+  width: 88px;
+  padding-left: 22px;
+}
+.table-left-icons > :first-child {
+  display: block;
+  margin-right: 22px;
+  opacity: 0.2;
+}
+
+.list-item .table-right-buttons {
+  opacity: 0.3;
+  transition: opacity 160ms ease-in-out;
+}
+.list-item:focus .table-right-buttons,
+.list-item:focus-within .table-right-buttons,
+.list-item:hover .table-right-buttons {
+  opacity: 1;
+}
+
+.table-right-buttons [icon="uploader:bin"] {
+  display: block;
+}
+
+paper-fab {
+  display: none;
+}

@@ -1,0 +1,71 @@
+paper-toast > paper-button::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 2px;
+  background-color: white;
+  opacity: 0;
+  transition: opacity 160ms ease-in-out;
+}
+paper-toast > paper-button:focus::after,
+paper-toast > paper-button:hover::after {
+  opacity: 0.12;
+}
+
+paper-dialog paper-button::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 2px;
+  background-color: var(--primary-color);
+  opacity: 0;
+  transition: opacity 160ms ease-in-out;
+}
+paper-dialog paper-button:focus::after,
+paper-dialog paper-button:hover::after {
+  opacity: 0.1;
+}
+
+#upload-icon {
+  fill: var(--secondary-text-color);
+}
+
+#clear-all-dialog paper-button[dialog-confirm]::after {
+  background-color: #f44336;
+}
+
+#circle[tabindex="0"] {
+  transform: none;
+  transition: transform 160ms ease-in-out;
+}
+
+#circle[tabindex="0"]:focus,
+#circle[tabindex="0"]:hover {
+  transform: scale(1.05);
+}
+
+.uaad-tile:focus, .uaad-tile:focus-within,
+.uaad-tile:hover {
+  z-index: 1;
+}
+.uaad-tile:focus::after,
+.uaad-tile:focus-within::after {
+  opacity: 1;
+}
+.uaad-tile:hover::after {
+  opacity: 0.75;
+}
+.uaad-tile::after {
+  border-radius: 0;
+  background: none;
+  box-shadow:
+    0 4px 10px 1px rgba(0,0,0,0.14),
+    0 1px 14px 3px rgba(0,0,0,0.12),
+    0 2px 15px 0   rgba(0,0,0,0.2);
+}

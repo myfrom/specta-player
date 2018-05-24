@@ -17,21 +17,23 @@
     <style>
     
       :host {
-        display: inline-block;
+        display: block;
+        height: 40px;
+        width: 40px;
+        padding: 0 !important;
       }
       
       paper-icon-button {
-        border-radius: 50%;
-        color: black;
-        opacity: 0.87;
-        padding: 5px;
-        height: 28px;
-        width: 28px;
+        color: inherit;
+        opacity: inherit;
+        padding: var(--preview-player-padding, 8px);
+        height: 100%;
+        width: 100%;
       }
       
     </style>
     
-    <paper-icon-button icon="sharedicons:[[_computeIcon(_playing)]]" on-tap="_togglePlay"></paper-icon-button>
+    <paper-icon-button icon="previewplayer:[[_computeIcon(_playing)]]" on-tap="_togglePlay"></paper-icon-button>
     
     <audio id="player" loop src="[[_getSong(song)]]"></audio>
   </template>
@@ -61,10 +63,11 @@
       }
       
       _getSong(song) {
-        return window._audio[song];
+        return window.appState.audio[song];
       }
       
-      _togglePlay() {
+      _togglePlay(e) {
+        e.stopPropagation();
         const player = this.$.player;
         if (this._playing) {
           this._playStatus.then(() => {

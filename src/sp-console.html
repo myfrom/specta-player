@@ -25,213 +25,295 @@
 <dom-module id="sp-console">
   <template>
     <style include="shared-styles">
-    
-      @media (max-width: 480px) {
-        
-        #btnsRow, #actionsRow {
-          display: flex;
-          flex-wrap: wrap;
-          justify-content: center;
-        }
-        
-        #actionsRow {
-          padding-bottom: 10px;
-        }
-        
-        #actionsRow > paper-button {
-          width: 45%;
-        }
-        
-        #audioBtns sp-player {
-          width: 47.5%;
-        }
-        
-      }
-      
-      @media (min-width: 481px) {
-        
-        #headerPlaceholder, #btnsRow {
-          border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-        }
-        
-        #btnsRow, #actionsRow {
-          padding: 10px 0;
-        }
-        
-        #actionsRow > paper-button, #audioBtns sp-player {
-          width: 160px;
-        }
-        
-      }
-    
+
       @keyframes slide-out {
+        
         0% {
           opacity: 1;
           transform: none;
         }
+        
         70% {
           opacity: 0;
         }
+        
         100% {
           opacity: 0;
           transform: translateX(100%);
         }
+        
       }
       
       @keyframes slide-in {
+        
         0% {
           opacity: 0;
           transform: translateX(100%);
         }
+        
         70% {
           opacity: 1;
         }
+        
         100% {
           opacity: 1;
           transform: none;
         }
+        
+      }
+
+      @keyframes slide-out-to-bottom {
+        
+        0% {
+          transform: none;
+        }
+        
+        100% {
+          transform: translateY(100%);
+        }
+        
       }
       
-      paper-button {
-        font-weight: 500 !important;
+      @keyframes slide-in-from-bottom {
+        
+        0% {
+          transform: translateY(100%);
+        }
+        
+        100% {
+          transform: none;
+        }
+        
       }
-      
-      paper-button > iron-icon {
-        margin-right: 4px;
+
+      :host(.closing) {
+        animation: 360ms ease-in-out slide-out;
       }
-      
-      paper-button:not([active]) > iron-icon {
-        color: #009688;
-        opacity: 1;
+      :host(.closing) #actions-row {
+        animation: 360ms ease-in slide-out-to-bottom;
       }
-      
-      paper-button[dialog-confirm] {
-        color: #f44336;
+
+      :host(.opening) {
+        animation: 360ms ease-in-out slide-in;
       }
-      
-      #headerPlaceholder > img {
+      :host(.opening) #actions-row {
+        animation: 360ms ease-out slide-in-from-bottom;
+      }
+    
+      .toolbar > img {
         width: 40px;
         height: 40px;
-        margin-left: 24px;
+        margin-right: 16px;
       }
       
-      #btnsRow, #actionsRow {
-        padding: 4px 0;
+      #buttons-row {
+        padding-left: 13px;
+      }
+      #buttons-row > paper-button {
+        padding: 0 10px 0 8px;
+        height: 36px;
+        margin: 0 3px;
+        color: var(--secondary-text-color);
+      }
+      #buttons-row > paper-button > iron-icon {
+        height: 24px;
+        width: 24px;
+        margin-right: 5px;
+        color: var(--primary-color);
+      }
+      #clear-btn {
+        --paper-button-ink-color: #f44336 !important;
       }
       
-      #btnsRow, #actionsRow paper-button {
-        color: rgba(0, 0, 0, 0.7);
-      }
-      
-      #btnsRow > paper-button {
-        background: none;
-        transition: background 160ms;
-      }
-      
-      #btnsRow > paper-button:not(#clearBtn):focus {
-        background: #b2dfdb;
-      }
-      
-      #clearBtn:focus {
-        background: #ef9a9a;
-      }
-      
-      #actionsRow {
-        border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-        position: sticky;
-        top: -1px;
-        background-color: #e0e0e0;
-      }
-      
-      #actionsRow > paper-button {
-        background-color: white;
-        margin: 4px;
-      }
-      
-      #actionsRow > paper-button[active] {
-        background-color: #009688;
-        color: white;
-      }
-      
-      #audioBtns h3 {
-        font-family: 'Montserrat', sans-serif;
-        font-size: 14px;
-        color: black;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-      }
-      
-      #audioBtns h3 {
-        width: 100%;
-        margin: 8px;
-      }
-      
-      #audioBtns .card {
+      #actions-row {
+        z-index: 2;
+        position: fixed;
+        bottom: 0;
         display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: start;
-        /*width: calc(100% - 16px);*/
+      }
+      #actions-row > paper-button {
+        color: var(--primary-text-color);
+        --paper-button-ink-color: var(--primary-color);
+      }
+
+      @media (orientation: landscape) and (max-width: 600px),
+       (orientation: portrait) and (max-width: 960px) {
+        
+        #actions-row {
+          left: 0;
+          right: 0;
+          height: 70px;
+          padding: 0 5vw;
+          align-items: stretch;
+          justify-content: stretch;
+          background-color: var(--white-color);
+          box-shadow:
+            0 10px 8px rgba(0,0,0,0.14),
+            0 -3px 14px rgba(0,0,0,0.12),
+            0 -4px 15px rgba(0,0,0,0.2);
+        }
+        #actions-row > paper-button {
+          flex: 1;
+          min-width: unset;
+          min-height: unset;
+          flex-direction: column;
+          text-transform: none;
+          font-weight: 400 !important;
+          padding: 0;
+          margin: 0;
+          font-size: 14px;
+          border-radius: 0;
+        }
+        #actions-row > paper-button > iron-icon {
+          width: 24px;
+          height: 24px;
+          margin-bottom: 6px;
+        }
+        #actions-row > paper-button[active] {
+          color: var(--primary-color);
+        }
+       
       }
       
-      #audioBtns sp-player {
-        margin: 4px;
+      #audio-container {
+        margin-bottom: 80px;
+        box-shadow:
+          0 3px 4px rgba(0,0,0,0.1),
+          0 1px 5px rgba(0,0,0,0.1);
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        background: #FAFAFA;
+      }
+      
+      #audio-container > h2 {
+        grid-column: 1 / -1;
+        font-size: 14px;
+        font-family: var(--header-font);
+        font-weight: 600;
+        padding: 0 16px;
+        margin: 0;
+        height: 48px;
+        line-height: 48px;
+        background-color: #EEEEEE;
+        color: var(--primary-text-color);
+      }
+      
+      @media (min-width: 480px) {
+      
+        #audio-container {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      
+      }
+      
+      @media (orientation: portrait) and (min-width: 840px),
+       (orientation: landscape) and (min-width: 960px) {
+      
+        #audio-container {
+          grid-template-columns: repeat(6, 1fr);
+        }
+      
+      }
+      
+      sp-player::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        opacity: 0;
+        transition: opacity 160ms ease-in-out;
+        box-shadow:
+          0 3px  5px rgba(0,0,0,0.14),
+          0 1px 18px rgba(0,0,0,0.2);
+      }
+      sp-player[active]::after {
+        opacity: 1 !important;
+      }
+      sp-player[pressed]::after {
+        opacity: 0.3;
+      }
+      sp-player[active], sp-player[pressed] {
+        z-index: 1;
+      }
+
+      @supports not (background-image: paint(checkerboard)) {
+        
+        #audio-container {
+          grid-gap: 1px;
+          background: #fefefe;
+        }
+
+        sp-player {
+          background-color: #FAFAFA;
+        }
+        
       }
 
     </style>
+    <!-- ::POLYMER-BUILD-FIX-CONSOLE:: -->
+    <link rel="stylesheet" href="/src/css/console-desktop.css"
+      media="(orientation: landscape) and (min-width: 601px), (orientation: portrait) and (min-width: 961px)">
+    <!-- ::POLYMER-BUILD-FIX-CONSOLE-END:: -->
+    <!-- ::POLYMER-BUILD-FIX-CONSOLE-PROPER::
+    <link rel="stylesheet" href="src/css/console-desktop.css"
+      media="(orientation: landscape) and (min-width: 601px), (orientation: portrait) and (min-width: 961px)">
+    ::POLYMER-BUILD-FIX-CONSOLE-PROPER-END:: -->
     
-    <div id="headerPlaceholder">
+    <div class="toolbar">
       <img alt="Very cool icon" src="images/icons/192.png">
-      <h2 class="header">Specta Player</h2>
+      <h1 class="header">Specta Player</h1>
     </div>
     
-    <div id="btnsRow">
-      <paper-button id="editBtn" on-tap="_sendCloseEvent">
+    <div class="toolbar" id="buttons-row">
+      <paper-button id="edit-btn" on-tap="_sendCloseEvent">
         <iron-icon icon="console:edit"></iron-icon>
         Edit
       </paper-button>
-      <paper-button id="downloadBtn" on-tap="_downloadConfig">
+      <paper-button id="download-btn" on-tap="_downloadConfig">
         <iron-icon icon="console:download"></iron-icon>
         Download
       </paper-button>
-      <paper-button id="clearBtn" on-tap="_clearData">
+      <paper-button id="clear-btn" on-tap="_clearData">
         <iron-icon icon="console:clear"></iron-icon>
         Clear all
       </paper-button>
     </div>
       
-    <div id="actionsRow">
-      <paper-button id="stopBtn" raised on-tap="_stopAllTracks">
+    <div class="toolbar" id="actions-row">
+      <paper-button id="stop-btn" on-tap="_stopAllTracks">
         <iron-icon icon="console:stop"></iron-icon>
         Stop all
       </paper-button>
       
-      <paper-button id="loopBtn" toggles raised on-active-changed="_toggleLoop">
+      <paper-button id="loop-btn" toggles on-active-changed="_toggleLoop">
         <iron-icon icon="console:loop"></iron-icon>
         Loop
       </paper-button>
       
-      <paper-button id="crossfadeBtn" toggles raised on-active-changed="_toggleCrossfade">
+      <paper-button id="crossfade-btn" toggles on-active-changed="_toggleCrossfade">
         <iron-icon icon="console:crossfade"></iron-icon>
         Crossfade
       </paper-button>
       
-      <paper-button id="multiBtn" toggles raised active="{{multi}}" on-active-changed="_multiSwitched">
+      <paper-button id="multi-btn" toggles active="{{multi}}" on-active-changed="_multiSwitched">
         <iron-icon icon="console:multi"></iron-icon>
-        Simultanous
+        Multi
       </paper-button>
     </div>
     
-    <div id="audioBtns"></div>
+    <div id="audio-container"></div>
   </template>
 
   <script>
-    class PlayerConsole extends Polymer.Element {
+    class Console extends Polymer.Element {
       
       static get is() { return 'sp-console'; }
       
       static get properties() { return {
         
-        data: {
+        config: {
           type: Array,
           notify: true,
           observer: '_renderElements'
@@ -253,24 +335,26 @@
         this._playingTracks = this._playingTracks || [];
         
         this.addEventListener('audioplayed', e => {
-          const i = e.detail;
+          const el = e.detail;
           if (!this.multi) this._stopAllTracks();
-          this._playingTracks.push(i);
+          this._playingTracks.push(el);
         });
         
         this.addEventListener('audiopaused', e => {
-          const i = e.detail;
-          this._playingTracks.splice(this._playingTracks.indexOf(i), 1);
+          const el = e.detail;
+          this._playingTracks.splice(this._playingTracks.indexOf(el), 1);
         });
       }
       
       close() {
+        this.addEventListener('animationend',
+          () => { this.classList.remove('closing'); this.classList.add('hidden'); },
+          { once: true });
         this.classList.add('closing');
-        setTimeout(() => { this.classList.remove('closing'); this.classList.add('hidden'); }, 360);
       }
       
       _sendCloseEvent() {
-        window.dispatchEvent(new CustomEvent('openspupload'));
+        window.dispatchEvent(new CustomEvent('open-uploader'));
       }
       
       open() {
@@ -278,36 +362,29 @@
           this.classList.remove('first-open');
           this.classList.remove('hidden');
         } else {
+          this.addEventListener('animationend', () => this.classList.remove('opening'), { once: true });
           this.classList.add('opening');
           this.classList.remove('hidden');
-          setTimeout(() => this.classList.remove('opening'), 360);
         }
       }
       
-      _renderElements(data) {
-        let htmlString = '<div class="card">';
-        data.forEach((item, index) => {
-          if (item.type === 'label') {
-            if (htmlString.match(/<div class="card">$/)) {
-              htmlString = htmlString.slice(0, -18);
-              htmlString += `<h3>${item.name}</h3> <div class="card">`;
-            } else
-              htmlString += `</div> <h3>${item.name}</h3> <div class="card">`;
-          } else if (item.type === 'audio') {
+      _renderElements(config) {
+        let htmlString = '';
+        config.forEach((item, index) => {
+          if (item.type === 'label')
+            htmlString += `<h2>${item.name}</h2>`;
+          else if (item.type === 'audio')
             htmlString += `<sp-player song="${item.song}" index="${index}">${item.name}</sp-player>`;
-          }
         });
-        if (htmlString.match(/<div class="card">$/)) {
-          htmlString = htmlString.slice(0, -18);
-        } else 
-          htmlString += '</div>'
-        this.$.audioBtns.insertAdjacentHTML('beforeend', htmlString);
+        this.shadowRoot.querySelector('#audio-container')
+          .insertAdjacentHTML('beforeend', htmlString);
       }
       
       _stopAllTracks() {
-        this._playingTracks.forEach(i => {
-          this.shadowRoot.querySelector(`sp-player[index="${i}"]`).$.btn.click();
-        });
+        while(this._playingTracks.length)
+          this._playingTracks.forEach(el => {
+            el.togglePlay(false);
+          });
       }
       
       _multiSwitched(e) {
@@ -338,19 +415,19 @@
           innerMsg: 'Delete app data and start over?\n(This won\'t remove files from your device)',
           cancelText: 'Keep it',
           acceptText: 'Remove',
-          target: this.shadowRoot
+          attributes: { id: 'clear-all-dialog' }
         }).then(() => {
-          this.dispatchEvent(new CustomEvent('cleardatabase', { bubbles: true, composed: true }));
+          this.dispatchEvent(new CustomEvent('clear-database', { bubbles: true, composed: true }));
         }).catch(e => {
-          if (e.error && !e.canceledDialog) throw e.error;
+          if (e.error) throw e.error;
         });
       }
       
       _downloadConfig() {
         const data = {
           type: 'SpectaPlayerConfigJSON-rev1',
-          order: this.data,
-          audio: window._audio
+          order: this.config,
+          audio: window.appState.audio
         };
         const file = new File([JSON.stringify(data)], 'specta-player-config.json', { type: "application/json;charset=utf-8" });
         saveAs(file);
@@ -358,6 +435,6 @@
       
     }
 
-    customElements.define(PlayerConsole.is, PlayerConsole);
+    customElements.define(Console.is, Console);
   </script>
 </dom-module>

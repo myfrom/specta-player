@@ -1,85 +1,87 @@
-<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymer/polymer.html">
 
-<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
-
-<link rel="import" href="../bower_components/paper-button/paper-button.html">
-
-<link rel="import" href="sharedicons.html">
+<link rel="import" href="../bower_components/paper-behaviors/paper-button-behavior.html">
 
 <dom-module id="sp-player">
   <template>
     <style>
     
       :host {
-        display: inline-block;
-      }
-      
-      paper-button {
+        position: relative;
+        display: flex;
+        flex-direction: column;
         width: 100%;
-        color: #009688;
-        font-family: 'Montserrat', sans-serif;
-        font-weight: 600 !important;
-        text-transform: none;
-        justify-content: start;
-        flex-wrap: wrap;
-        margin: 0;
+        height: 100%;
+        box-sizing: border-box;
+        color: var(--primary-text-color);
+        font-family: var(--main-font);
+        height: 82px;
+        padding: 8px 16px;
+        justify-content: space-evenly;
+        outline: none !important;
+      }
+      
+      #progress-container {
+        box-sizing: border-box;
         overflow: hidden;
-        text-overflow: ellipsis;
-        border: 1px solid rgba(0, 150, 136, 0.32);
-        background: none;
-        transition: background 160ms;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: 0;
       }
-      
-      paper-button:focus {
-        background: #E0F2F1;
-      }
-      
-      #btnName {
-        flex: 1;
-      }
-      
-      iron-icon {
-        opacity: 0.32;
-      }
-      
-      #progress {
+      #progress-bar {
+        box-sizing: border-box;
         position: absolute;
         top: 0;
         bottom: 0;
         left: 0;
         width: 1px;
-        background-color: rgba(0,150,136,0.12);
-        /*transition: transform;*/
+        transform: scaleX(0);
         transform-origin: left;
+        background-color: var(--primary-color);
+        opacity: 0.3;
       }
       
-      #songName {
-        opacity: 0.5;
-        width: 100%;
-        overflow: hidden;
+      #label, #filename, #progress-time {
+        overflow-y: hidden;
         text-overflow: ellipsis;
-        font-family: 'Roboto', sans-serif;
-        font-weight: 400 !important;
       }
       
-      #player {
+      #label {
+        font-size: 16px;
+      }
+      #filename {
+        font-size: 12px;
+        color: var(--secondary-text-color);
+      }
+      #progress-time {
+        font-size: 12px;
+        font-weight: 500;
+      }
+      
+      paper-ripple {
+        color: var(--primary-color);
+      }
+
+      audio {
         display: none;
       }
       
     </style>
     
-    <paper-button on-tap="_togglePlay" id="btn" toggles>
-      <div id="progress"></div>
-      <span id="btnName"><slot></slot></span>
-      <iron-icon icon="sharedicons:[[_computeIcon(_playing)]]"></iron-icon>
-      <span id="songName">[[song]]</span>
-    </paper-button>
+    <div id="progress-container">
+      <div id="progress-bar"></div>
+    </div>
+    <div id="label"><slot></slot></div>
+    <div id="filename">[[song]]</div>
+    <div id="progress-time">0:00 / 0:00</div>
     
-    <audio loop="[[loop]]" id="player" src="[[_getSong(song)]]"></audio>
+    <audio loop="[[loop]]" src="[[_getSong(song)]]"></audio>
   </template>
 
   <script>
-    class Player extends Polymer.Element {
+    class Player extends Polymer.mixinBehaviors(Polymer.PaperButtonBehavior, Polymer.Element) {
       
       static get is() { return 'sp-player'; }
       
@@ -87,15 +89,11 @@
         
         song: String,
         
-        index: {
-          type: Number,
-          reflectToAttribute: true
-        },
-        
-        _playing: {
+        playing: {
           type: Boolean,
           value: false,
-          observer: '_notifyAboutPlayback'
+          observer: '_notifyAboutPlayback',
+          reflectToAttribute: true
         },
         
         loop: {
@@ -117,107 +115,142 @@
       connectedCallback() {
         super.connectedCallback();
         
-        this.$.player.addEventListener('ended', () => this._playing = false);
+        this.setAttribute('toggles', true);
         
-        const dragCallbackStart = e => {
-          const currentX = e.x || e.touches[0].screenX,
-                currentY = e.y || e.touches[0].screenY;
-          this._initialDragCords = { x: currentX, y: currentY }
+        if (!this._audioEl) this._audioEl = this.shadowRoot.querySelector('audio');
+        if (!this._progressBar) this._progressBar = this.shadowRoot.querySelector('#progress-bar');
+        if (!this._progressTime) this._progressTime = this.shadowRoot.querySelector('#progress-time');
+        
+        this.addEventListener('tap', this.togglePlay.bind(this));
+        this._audioEl.addEventListener('ended', () => this.togglePlay(false));
+
+        this._setDuration = () => {
+          this._durationFormatted = this._toMinutes(this._audioEl.duration);
+          this._progressTime.textContent = `0:00 / ${this._durationFormatted}`;
         };
-        this.$.btn.addEventListener('mousedown', dragCallbackStart, { passive: true });
-        this.$.btn.addEventListener('touchstart', dragCallbackStart, { passive: true });
+        this._audioEl.addEventListener('loadedmetadata', this._setDuration.bind(this));
         
-        const dragCallbackMove = e => {
+        this._dragCallbackStart = e => {
+          if (window.appState.dragging) return;
+          const currentX = e.clientX || e.touches[0].clientX,
+                currentY = e.clientY || e.touches[0].clientY;
+          this._initialDragCords = { x: currentX, y: currentY };
+          window.appState.dragging = this;
+        };
+        this.addEventListener('mousedown', this._dragCallbackStart, { passive: true });
+        this.addEventListener('touchstart', this._dragCallbackStart, { passive: true });
+        
+        this._dragCallbackMove = e => {
           if (!this._initialDragCords) return;
-          const currentX = e.x || e.touches[0].screenX,
-                currentY = e.y || e.touches[0].screenY,
+          const currentX = e.clientX || e.touches[0].clientX,
+                currentY = e.clientY || e.touches[0].clientY,
                 xAxis = this._initialDragCords.x - currentX,
                 yAxis = this._initialDragCords.y - currentY;
-                if (Math.abs(xAxis) > Math.abs(yAxis)) {
-                  e.preventDefault();
-                  const percentage = xAxis/200,
-                        player = this.$.player,
-                        duration = player.duration,
-                        currentTime = player.currentTime;
-                  let skipTo = currentTime - duration * percentage;
-                  if (skipTo > duration) skipTo = duration;
-                  if (skipTo < 0) skipTo = 0;
-                  this._skipTo = skipTo;
-                  requestAnimationFrame(() => {
-                    const width = this.$.btn.getBoundingClientRect().width;
-                    this.$.progress.style.transform = `scaleX(${Math.round(this._skipTo / duration * width)}`;
-                  });
-                  console.log(skipTo);
-                }
-        };
-        this.$.btn.addEventListener('mousemove', dragCallbackMove);
-        this.$.btn.addEventListener('touchmove', dragCallbackMove);
-        
-        const dragCallbackEnd = e => {
-          if (this._skipTo) {
-            const player = this.$.player,
-                  duration = player.duration;
-            console.log('Finished', this._skipTo);
-            player.currentTime = this._skipTo;
+          if (Math.abs(xAxis) > Math.abs(yAxis)) {
+            e.preventDefault();
+            const percentage = xAxis/200,
+                  duration = this._audioEl.duration,
+                  currentTime = this._audioEl.currentTime;
+            let skipTo = currentTime - duration * percentage;
+            if (skipTo > duration) skipTo = duration;
+            if (skipTo < 0) skipTo = 0;
+            this._skipTo = skipTo;
             requestAnimationFrame(() => {
-              const width = this.$.btn.getBoundingClientRect().width;
-              this.$.progress.style.transform = `scaleX(${Math.round(this._skipTo / duration * width)}`;
-              this._skipTo = this._initialDragCords = null;
+              const width = this.getBoundingClientRect().width;
+              this._progressBar.style.transform = `scaleX(${Math.round(this._skipTo / duration * width)})`;
+              this._progressTime.textContent = `${this._toMinutes(skipTo)} / ${this._durationFormatted}`;
             });
           }
         };
-        window.addEventListener('mouseup', dragCallbackEnd, { passive: true });
-        window.addEventListener('touchend', dragCallbackEnd, { passive: true });
+        window.addEventListener('mousemove', this._dragCallbackMove.bind(this), { passive: false });
+        window.addEventListener('touchmove', this._dragCallbackMove.bind(this), { passive: false });
+        
+        this._dragCallbackEnd = e => {
+          if (this._skipTo) {
+            const duration = this._audioEl.duration,
+                  skipTo = this._skipTo;
+            this._audioEl.currentTime = skipTo;
+            requestAnimationFrame(() => {
+              const width = this.getBoundingClientRect().width;
+              this._progressBar.style.transform = `scaleX(${Math.round(skipTo / duration * width)}`;
+              this._progressTime.textContent = `${this._toMinutes(skipTo)} / ${this._durationFormatted}`;
+            });
+          }
+          this._skipTo = this._initialDragCords = window.appState.dragging = null;
+        };
+        window.addEventListener('mouseup', this._dragCallbackEnd.bind(this), { passive: true });
+        window.addEventListener('touchend', this._dragCallbackEnd.bind(this), { passive: true });
       }
       
-      _computeIcon(playing) {
-        return playing ? 'pause' : 'play';
+      disconnectedCallback() {
+        if (this.playing) this.togglePlay();
+        
+        this.removeEventListener('tap', this.togglePlay.bind(this));
+
+        this._audioEl.removeEventListener('loadedmetadata', this._setDuration.bind(this));
+        
+        this.removeEventListener('mousedown', this._dragCallbackStart, { passive: true });
+        this.removeEventListener('touchstart', this._dragCallbackStart, { passive: true });
+        window.removeEventListener('mousemove', this._dragCallbackMove.bind(this), { passive: false });
+        window.removeEventListener('touchmove', this._dragCallbackMove.bind(this), { passive: false });
+        window.removeEventListener('mouseup', this._dragCallbackEnd.bind(this), { passive: true });
+        window.removeEventListener('touchend', this._dragCallbackEnd.bind(this), { passive: true });
       }
       
-      _getSong(song) {
-        return window._audio[song];
-      }
-      
-      _togglePlay() {
-        const player = this.$.player;
-        if (this._playing) {
+      togglePlay(forcedState) {
+        const playState = forcedState instanceof Boolean ?
+          forcedState : this._playing;
+        if (playState) {
+          this._notifyAboutPlayback(false);
           this._playStatus.then(async () => {
-            if (this.crossfade)
-              await this._fadeOutAudio(player);
-            player.pause();
+            if (this._playing) {
+              if (this.crossfade)
+                await this._fadeOutAudio(this._audioEl);
+              this._audioEl.pause();
+            }
             this._playing = false;
+            this.active = false;
           });
         } else {
-          player.volume = this.crossfade ? 0 : 1;
-          this._playStatus = player.play();
+          this._notifyAboutPlayback(true);
+          this._audioEl.volume = this.crossfade ? 0 : 1;
+          this._playStatus = this._audioEl.play();
           this._playing = true;
-          if (this.crossfade) this._fadeInAudio(player);
+          this.active = true;
+          if (this.crossfade) this._fadeInAudio(this._audioEl);
           
-          const duration = player.duration,
-                width = this.$.btn.getBoundingClientRect().width,
+          const duration = this._audioEl.duration,
+                width = this.getBoundingClientRect().width,
                 callback = () => {
-                  const currentTime = player.currentTime;
-                  this.$.progress.style.transform = `scaleX(${Math.round(currentTime / duration * width)}`;
+                  if (window.appState.dragging !== this) {
+                    const currentTime = this._audioEl.currentTime;
+                    this._progressBar.style.transform = `scaleX(${Math.round(currentTime / duration * width)}`;
+                    this._progressTime.textContent = `${this._toMinutes(currentTime)} / ${this._durationFormatted}`;
+                  }
                   if (this._playing) requestAnimationFrame(callback);
                 };
           requestAnimationFrame(callback);
         }
       }
       
+      _getSong(song) {
+        return window.appState.audio[song];
+      }
+      
       _notifyAboutPlayback(state) {
         this.dispatchEvent(new CustomEvent('audio' + (state ? 'played' : 'paused'),
-          { bubbles: true, composed: true, detail: this.index }));
+          { bubbles: true, composed: true, detail: this }));
       }
       
-      _fadeInAudio(player) {
+      _fadeInAudio(audioEl) {
         return new Promise(r => {
           let i = 20;
-          player.volume = 0;
+          audioEl.volume = 0;
           const interval = setInterval(() => {
-            player.volume = (player.volume * 100 + 5) / 100;
+            audioEl.volume = (audioEl.volume * 100 + 5) / 100;
             i--;
             if (i <= 0) {
-              player.volume = 1;
+              audioEl.volume = 1;
               clearInterval(interval);
               r();
             }
@@ -225,20 +258,28 @@
         });
       }
       
-      _fadeOutAudio(player) {
+      _fadeOutAudio(audioEl) {
         return new Promise(r => {
           let i = 20;
-          player.volume = 1;
+          audioEl.volume = 1;
           const interval = setInterval(() => {
-            player.volume = (player.volume * 100 - 5) / 100;
+            audioEl.volume = (audioEl.volume * 100 - 5) / 100;
             i--;
             if (i <= 0) {
-              player.volume = 0;
+              audioEl.volume = 0;
               clearInterval(interval);
               r();
             }
           }, 100);
         });
+      }
+
+      _toMinutes(input) {
+        let seconds = Math.round(input);
+        const minutes = Math.floor(seconds / 60);
+        seconds = seconds - minutes * 60;
+        if (seconds.length !== 2) seconds = '0' + seconds;
+        return `${minutes}:${seconds}`; 
       }
       
     }
