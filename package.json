@@ -1,0 +1,48 @@
+{
+  "name": "specta-player",
+  "version": "2.0.0",
+  "description": "An easy way to play audio on your spectacles",
+  "private": true,
+  "scripts": {
+    "test": "polymer lint && polymer test -s \"default\"",
+    "build": "./node_modules/.bin/gulp"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/myfrom/specta-player.git"
+  },
+  "keywords": [
+    "spectacle",
+    "material",
+    "material-design",
+    "player",
+    "audio"
+  ],
+  "author": "Wiktor Olejniczak <myfrom.13th@gmail.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/myfrom/specta-player/issues"
+  },
+  "homepage": "https://github.com/myfrom/specta-player#readme",
+  "devDependencies": {
+    "@myfrom/logger": "^0.1.1",
+    "del": "^3.0.0",
+    "google-closure-compiler-js": "^20180506.0.0",
+    "gulp": "^3.9.1",
+    "gulp-clean-css": "^3.9.4",
+    "gulp-error-handle": "^1.0.1",
+    "gulp-flatmap": "^1.0.2",
+    "gulp-htmlmin": "^4.0.0",
+    "gulp-if": "^2.0.2",
+    "gulp-replace": "^1.0.0",
+    "gulp-svgmin": "^1.2.4",
+    "gulp-uglify": "^3.0.0",
+    "merge-stream": "^1.0.1",
+    "minimatch": "^3.0.4",
+    "polymer-build": "^3.0.1",
+    "workbox-build": "^3.2.0"
+  },
+  "dependencies": {
+    "uglify-es": "github:mishoo/UglifyJS2#harmony"
+  }
+}
