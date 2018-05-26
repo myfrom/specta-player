@@ -6,7 +6,16 @@
   
   "fragments": [
     "src/sp-upload.html",
-    "src/sp-console.html"
+    "src/sp-console.html",
+    "bower_components/paper-toast/paper-toast.html",
+    "bower_components/paper-button/paper-button.html",
+    "bower_components/paper-dialog/paper-dialog.html",
+    "bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html",
+    "bower_components/neon-animation/web-animations.html",
+    "bower_components/neon-animation/animations/fade-in-animation.html",
+    "bower_components/neon-animation/animations/fade-out-animation.html",
+    "bower_components/neon-animation/animations/slide-from-bottom-animation.html",
+    "bower_components/neon-animation/animations/slide-down-animation.html"
   ],
   
   "sources": [
@@ -16,6 +25,8 @@
   
   "extraDependencies": [
     "bower_components/webcomponentsjs/*",
+    "bower_components/Notifier/notifier.js",
+    "bower_components/Notifier/styles.css",
     "manifest.json",
     "src/**/*",
     "images/**/*",
@@ -23,9 +34,6 @@
   ],
 
   "betterPolymerBuild": {
-    "skipTypes": {
-      "js": true
-    },
     "ignoredFiles": [
       "src/src/**/*",
       "src/sp-console.html_script_1.js"
