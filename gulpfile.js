@@ -6,14 +6,13 @@ const logger = require('@myfrom/logger'),
       mergeStream = require('merge-stream'),
       polymerBuild = require('polymer-build'),
       errorHandler = require('gulp-error-handle'),
+      minimatch = require('minimatch'),
       replace = require('gulp-replace'),
-      minimatch = require("minimatch"),
-      flatmap = require('gulp-flatmap'),
       fs = require('fs').promises,
       path = require('path'),
       workbox = require('workbox-build'),
       // Minifiers
-      jsmin = require('google-closure-compiler-js').gulp(),
+      jsmin = require('gulp-babel-minify'),
       htmlmin = require('gulp-htmlmin'),
       svgmin = require('gulp-svgmin'),
       cssmin = require('gulp-clean-css');
@@ -21,10 +20,9 @@ const logger = require('@myfrom/logger'),
 const minOptions =
 {
   js: {
-    'compilationLevel': 'SIMPLE',
-    'polymerVersion': 2,
-    'languageIn': 'ECMASCRIPT_2017',
-    'languageOut': 'ECMASCRIPT6'
+    mangle: {
+      keepClassName: true
+    }
   },
   html: {
     'collapseWhitespace': true,
@@ -125,11 +123,6 @@ gulp.task('build', ['cleanup'], async () => {
   let sourcesStream = mergeStream(polymerProject.sources(), gulp.src([polymerJson.entrypoint])),
         dependenciesStream = polymerProject.dependencies();
 
-  const externsPath =
-      'node_modules/google-closure-compiler-js/contrib/externs/polymer-1.0.js';
-  const externsSrc = await fs.readFile(externsPath, 'utf-8');
-  minOptions.js.externs = [ {'src': externsSrc, 'path': 'polymer-1.0.js'} ];
-
   function processor(stream) {
     const streamSplitter = new polymerBuild.HtmlSplitter();
 
@@ -144,9 +137,7 @@ gulp.task('build', ['cleanup'], async () => {
         })))
       .pipe(streamSplitter.split())
       .pipe(gulpif(file => !skipTypes.svg && shallPass(file, 'svg'), svgmin(minOptions.svg)))
-      // Closure compiles into one file so we need to split it
-      .pipe(gulpif(file => !skipTypes.js && shallPass(file, 'js'), flatmap((stream, file) =>
-        stream.pipe(jsmin(Object.assign(minOptions.js, { jsOutputFile: file.path }))))))
+      .pipe(gulpif(file => !skipTypes.js && shallPass(file, 'js'), jsmin(minOptions.js)))
       .pipe(gulpif(file => !skipTypes.css && shallPass(file, 'css'), cssmin(minOptions.css)))
       .pipe(gulpif(file => !skipTypes.html && shallPass(file, 'html'), htmlmin(minOptions.html)));
     
