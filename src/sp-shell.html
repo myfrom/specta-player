@@ -133,60 +133,69 @@
       }
       
       async readFiles(files) {
-        window.appState.audio = window.appState.audio || {};
-        this.config = this.config || [];
-        const awaitingReads = [];
-        gtag('event', 'uploaded', {
-          category: 'files',
-          value: files.length
-        });
-        let readFromConfig = false;
-        files.forEach(file => {
-          const reader = new FileReader();
-          if (file.type.match(/^audio/)) {
-            awaitingReads.push(new Promise(r => {
-              reader.onload = e => {
-                if (window.appState.audio[file.name]) {
-                  let i = 1;
-                  while (window.appState.audio[file.name + ' (' + i + ')']) i++;
-                  window.appState.audio[file.name + ' (' + i + ')'] = e.target.result;
-                  this._broadcastFileAdded(file.name + ' (' + i + ')');
-                } else {
-                  window.appState.audio[file.name] = e.target.result;
-                  this._broadcastFileAdded(file.name);
-                }
-                window.appState.audio[fileName] = e.target.result;
-                r(fileName);
-              };
-              reader.readAsDataURL(file);
-            }));
-          } else {
-            awaitingReads.push(new Promise(r => {
-              readFromConfig = true;
-              reader.onload = e => {
-                this._readConfigFromFile(e.target.result);
-                r();
-              };
-              reader.readAsText(file);
-            }));
-          }
-        });
-        await Promise.all(awaitingReads);
-        if (!this.config.length) {
+        try {
+          window.appState.audio = window.appState.audio || {};
           this.config = this.config || [];
-          Object.keys(window.appState.audio).forEach(key =>
-            this.config.push({ type: 'audio', name: key.match(/(.+)\..[^\.]+$/)[1], song: key }));
-          this.notifySplices('config');
-        } else {
-          if (!readFromConfig)
-            awaitingReads.forEach(promise =>
-              promise.then(key => { // Regex is picking name of the file without extension
-                this.push('config', { type: 'audio', name: key.match(/(.+)\..[^\.]+$/)[1], song: key });
+          const awaitingReads = [];
+          gtag('event', 'uploaded', {
+            category: 'files',
+            value: files.length
+          });
+          let readFromConfig = false;
+          files.forEach(file => {
+            const reader = new FileReader();
+            if (file.type.match(/^audio/)) {
+              awaitingReads.push(new Promise(r => {
+                reader.onload = e => {
+                  if (window.appState.audio[file.name]) {
+                    let i = 1;
+                    while (window.appState.audio[file.name + ' (' + i + ')']) i++;
+                    window.appState.audio[file.name + ' (' + i + ')'] = e.target.result;
+                    this._broadcastFileAdded(file.name + ' (' + i + ')');
+                  } else {
+                    window.appState.audio[file.name] = e.target.result;
+                    this._broadcastFileAdded(file.name);
+                  }
+                  window.appState.audio[fileName] = e.target.result;
+                  r(fileName);
+                };
+                reader.readAsDataURL(file);
               }));
+            } else {
+              awaitingReads.push(new Promise(r => {
+                readFromConfig = true;
+                reader.onload = e => {
+                  this._readConfigFromFile(e.target.result);
+                  r();
+                };
+                reader.readAsText(file);
+              }));
+            }
+          });
+          await Promise.all(awaitingReads);
+          if (!this.config.length) {
+            this.config = this.config || [];
+            Object.keys(window.appState.audio).forEach(key =>
+              this.config.push({ type: 'audio', name: key.match(/(.+)\..[^\.]+$/)[1], song: key }));
+            this.notifySplices('config');
+          } else {
+            if (!readFromConfig)
+              awaitingReads.forEach(promise =>
+                promise.then(key => { // Regex is picking name of the file without extension
+                  this.push('config', { type: 'audio', name: key.match(/(.+)\..[^\.]+$/)[1], song: key });
+                }));
+          }
+          if (this.$.uploader.classList.contains('hidden') || this.$.uploader.classList.contains('first-open'))
+            this.openUploader();
+          this.saveDataToIDB('audioFiles', window.appState.audio);
+        } catch(err) {
+          if (err === false) return;
+          gtag('event', 'exception', {
+              'description': 'file_reading_error',
+              'fatal': true
+            });
+          throw err;
         }
-        if (this.$.uploader.classList.contains('hidden') || this.$.uploader.classList.contains('first-open'))
-          this.openUploader();
-        this.saveDataToIDB('audioFiles', window.appState.audio);
       }
       
       _getAudio() {
@@ -219,13 +228,32 @@
           }
         };
         if (isValid(parsed)) {
-          gtag('event', 'uploaded', {
-            category: 'config',
+          const callback = clearAudio => {
+            gtag('event', 'uploaded', {
+              category: 'config',
+            });
+            clearAudio && (window.appState.audio = {});
+            Object.keys(parsed.audio).forEach(key => {
+              window.appState.audio[key] = parsed.audio[key];
+            });
+            this.config = parsed.order;
+          };
+          if (this.config && this.config.length) {
+            Notifier.askDialog('Replace current config?', {
+              innerMsg: 'You have just uploaded a new config, if you choose use it, you will lose the current one.',
+              acceptText: 'Replace',
+              cancelText: 'Cancel'
+            }).then(() => callback(true)).catch(err => {
+              if (err.error !== false) throw err;
+            });
+          } else callback(false);
+        } else {
+          console.log('Invalid JSON provided');
+          Notifier.showToast(`Config file you uploaded is invalid 😕`);
+          gtag('event', 'exception', {
+            'description': 'config_parsing_error',
+            'fatal': false
           });
-          Object.keys(parsed.audio).forEach(key => {
-            window.appState.audio[key] = parsed.audio[key];
-          });
-          this.config = parsed.order;
         }
       }
       
