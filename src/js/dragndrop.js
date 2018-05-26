@@ -54,7 +54,6 @@
           return true;
         } else if (file.name.match(/\.json$/)) {
           console.log('JSON object received');
-          // @TODO: Ask for confirmation
           return true;
         } else {
           console.log('Invalid file received');
@@ -64,6 +63,8 @@
       });
       if (validFiles.length) {
         document.querySelector('sp-shell').readFiles(validFiles);
+        if (document.querySelector('#circle'))
+          window.dispatchEvent(new CustomEvent('files-added-alt'));
       }
     };
   }

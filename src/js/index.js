@@ -96,21 +96,23 @@ setTimeout(() => {
 
 // Register Service Worker
 /*::SERVICE-WORKER:: (will be activated at build)
-navigator.serviceWorker.register('service-worker.js',
-  { scope: location.origin.includes('github') ? '/specta-player/' : '/' })
-  .then(() => navigator.serviceWorker.ready)
-  .then(() => {
-    const callback = () => {
-      const channel = new MessageChannel();
-      channel.port1.onmessage = e =>
-        e.data === 'sw-ready' && Notifier.showToast(`App can now work offline ⚙`);
-        navigator.serviceWorker.controller.postMessage('sw-update-question', [channel.port2]);
-    };
-    if (!('Notifier' in window))
-      window.addEventListener('notifier-ready', callback, { once: true });
-    else
-      callback();
-  });
+window.addEventListener('load', () => {
+  navigator.serviceWorker.register('service-worker.js',
+    { scope: location.origin.includes('github') ? '/specta-player/' : '/' })
+    .then(() => navigator.serviceWorker.ready)
+    .then(() => {
+      const callback = () => {
+        const channel = new MessageChannel();
+        channel.port1.onmessage = e =>
+          e.data === 'sw-ready' && Notifier.showToast(`App can now work offline ⚙`);
+          navigator.serviceWorker.controller.postMessage('sw-update-question', [channel.port2]);
+      };
+      if (!('Notifier' in window))
+        window.addEventListener('notifier-ready', callback, { once: true });
+      else
+        callback();
+    });
+}, { once: true });
 ::SERVICE-WORKER-END::*/
 
 
@@ -263,6 +265,11 @@ window.addEventListener('idb-check-fail', e => {
     document.body.appendChild(input);
     input.click();
   }
+
+  window.addEventListener('files-added-alt', () => {
+    Array.from(document.querySelectorAll('input[type="file"]')).forEach(item => item.remove());
+    finishAnimation();
+  });
 
   // Play animation when everything is ready
   window.addEventListener('shell-ready', e => {
