@@ -182,7 +182,8 @@
           0 1px 5px rgba(0,0,0,0.1);
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        background: #FAFAFA;
+        grid-gap: 1px;
+        background: #f4f4f4;
       }
       
       #audio-container > h2 {
@@ -214,6 +215,10 @@
         }
       
       }
+
+      sp-player {
+        background-color: #FFFFFF;
+      }
       
       sp-player::after {
         content: "";
@@ -236,19 +241,6 @@
       }
       sp-player[active], sp-player[pressed] {
         z-index: 1;
-      }
-
-      @supports not (background-image: paint(checkerboard)) {
-        
-        #audio-container {
-          grid-gap: 1px;
-          background: #fefefe;
-        }
-
-        sp-player {
-          background-color: #FAFAFA;
-        }
-        
       }
 
     </style>
