@@ -139,7 +139,7 @@ window.addEventListener('contextmenu', e => e.preventDefault());
 // Import Shell and Notifier
 importHref('src/sp-shell.html').then(() => {
   const el = document.createElement('script');
-  el.setAttribute('src', 'bower_components/notifier/notifier.js');
+  el.setAttribute('src', 'bower_components/Notifier/notifier.js');
   el.setAttribute('async', true);
   document.head.appendChild(el);
 });
