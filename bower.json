@@ -14,10 +14,10 @@
     "file-saver": "1.3.3",
     "paper-dialog-scrollable": "^2.1.0",
     "paper-toast": "^2.0.0",
-    "slip": "kornelski/slip#^2.1.1",
     "paper-fab": "^2.1.0",
     "web-animations-js": "^2.3.1",
-    "Notifier": "myfrom/Notifier"
+    "Notifier": "myfrom/Notifier",
+    "slip": "myfrom/slip#master"
   },
   "devDependencies": {
     "web-component-tester": "Polymer/web-component-tester#^6.0.0",
