@@ -75,7 +75,7 @@ sp-player:focus, sp-player:hover {
 }
 #actions-row > paper-button[active] {
   background-color: var(--primary-color);
-  color: white;
+  color: white !important;
 }
 #actions-row > paper-button[active] > iron-icon {
   color: white;
