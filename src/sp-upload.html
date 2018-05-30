@@ -233,6 +233,14 @@
           0 3px 14px 3px rgba(0,0,0,0.12),
           0 4px 15px 0   rgba(0,0,0,0.07);
       }
+
+      paper-input {
+        -webkit-touch-callout: auto;
+        -webkit-user-select: auto;
+        -moz-user-select: auto;
+        -ms-user-select: auto;
+        user-select: auto;
+      }
       
       paper-fab {
         position: fixed;
@@ -335,13 +343,13 @@
         slipList.addEventListener('slip:beforewait', e => {
           if (!this._isPhone) {
             let el = e.target;
-            while (el.tagName.toLocaleLowerCase() !== 'div') el = el.parentElement;
+            while (el.tagName !== 'DIV') el = el.parentElement;
             if (el.classList.contains('table-left-icons'))
               e.preventDefault();
           }
         });
         slipList.addEventListener('slip:beforeswipe', e => {
-          if (e.target.tagName.toLocaleLowerCase() === 'paper-input')
+          if (e.target.tagName === 'PAPER-INPUT')
             e.preventDefault();
         });
         slipList.addEventListener('slip:swipe', this._deleteItem.bind(this));
@@ -351,7 +359,7 @@
           this.notifySplices('config');
           e.preventDefault();
         });
-        new Slip(slipList);
+        new Slip(slipList, { ignoredElements: [ 'dom-repeat' ] });
         
         window.dispatchEvent(new CustomEvent('uploader-loaded'));
       }
