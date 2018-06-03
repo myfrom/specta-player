@@ -253,6 +253,11 @@
           0 3px  5px rgba(37,37,37,0.2);
         z-index: 2;
       }
+
+      /* Workaround for #2 */
+      .is-firefox .list-item {
+        will-change: unset !important;
+      }
       
     </style>
     <!-- ::POLYMER-BUILD-FIX-UPLOADER:: -->
@@ -362,6 +367,10 @@
         new Slip(slipList, { ignoredElements: [ 'dom-repeat' ] });
         
         window.dispatchEvent(new CustomEvent('uploader-loaded'));
+
+        // Workaround for #2
+        if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1)
+          this.shadowRoot.querySelector('#slip-container').classList.add('is-firefox');
       }
       
       close() {
