@@ -147,16 +147,14 @@
             if (file.type.match(/^audio/)) {
               awaitingReads.push(new Promise(r => {
                 reader.onload = e => {
-                  if (window.appState.audio[file.name]) {
+                  let fileName = file.name;
+                  if (window.appState.audio[fileName]) {
                     let i = 1;
-                    while (window.appState.audio[file.name + ' (' + i + ')']) i++;
-                    window.appState.audio[file.name + ' (' + i + ')'] = e.target.result;
-                    this._broadcastFileAdded(file.name + ' (' + i + ')');
-                  } else {
-                    window.appState.audio[file.name] = e.target.result;
-                    this._broadcastFileAdded(file.name);
+                    while (window.appState.audio[fileName + ' (' + i + ')']) i++;
+                    fileName = fileName + ' (' + i + ')'
                   }
                   window.appState.audio[fileName] = e.target.result;
+                  this._broadcastFileAdded(fileName);
                   r(fileName);
                 };
                 reader.readAsDataURL(file);
