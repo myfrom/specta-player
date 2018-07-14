@@ -3,7 +3,7 @@ language: node_js
 node_js: stable
 
 install:
- - npm install -g polymer-cli gulp
+ - npm install -g polymer-cli
  - polymer install 
 
 script:
