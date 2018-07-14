@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "test": "polymer lint && polymer test -s \"default\"",
-    "build": "./node_modules/.bin/gulp"
+    "build": "./node_modules/.bin/gulp",
+    "start": "polymer serve",
+    "start:prod": "./node_modules/.bin/gulp && polymer serve -p 8080 ./dist"
   },
   "repository": {
     "type": "git",
