@@ -263,7 +263,7 @@ window.addEventListener('idb-check-fail', e => {
       Array.from(document.querySelectorAll('input[type="file"]')).forEach(item => item.remove());
     });
     document.body.appendChild(input);
-    input.click();
+    input.dispatchEvent(new MouseEvent('click', { bubbles: false }))
   }
 
   window.addEventListener('files-added-alt', () => {
