@@ -42,7 +42,7 @@ const minOptions =
 
 const polymerJson = require('./polymer.json'),
       buildConfig = polymerJson.betterPolymerBuild || {},
-      buildDir = buildConfig.buildDirectory || 'build';
+      buildDir = buildConfig.buildDirectory || 'dist';
 
 /**
  * Waits for the given ReadableStream
