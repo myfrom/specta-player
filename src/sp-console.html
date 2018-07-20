@@ -305,11 +305,7 @@
       
       static get properties() { return {
         
-        config: {
-          type: Array,
-          notify: true,
-          observer: '_renderElements'
-        },
+        config: Array,
         
         multi: Boolean,
         
@@ -353,10 +349,19 @@
         if (this.classList.contains('first-open')) {
           this.classList.remove('first-open');
           this.classList.remove('hidden');
+
+          this._renderElements(this.config);
+          this._renderedConfig = JSON.stringify(this.config);
         } else {
           this.addEventListener('animationend', () => this.classList.remove('opening'), { once: true });
           this.classList.add('opening');
           this.classList.remove('hidden');
+
+          const configString = JSON.stringify(this.config);
+          if (configString !== this._renderedConfig) {
+            this._renderElements(this.config);
+            this._renderedConfig = configString;
+          }
         }
       }
       
@@ -368,8 +373,7 @@
           else if (item.type === 'audio')
             htmlString += `<sp-player song="${item.song}" index="${index}">${item.name}</sp-player>`;
         });
-        this.shadowRoot.querySelector('#audio-container')
-          .insertAdjacentHTML('beforeend', htmlString);
+        this.shadowRoot.querySelector('#audio-container').innerHTML = htmlString;
       }
       
       _stopAllTracks() {
