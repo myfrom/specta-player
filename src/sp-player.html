@@ -280,7 +280,7 @@
         let seconds = Math.round(input);
         const minutes = Math.floor(seconds / 60);
         seconds = seconds - minutes * 60;
-        if (seconds.length !== 2) seconds = '0' + seconds;
+        if (seconds < 10) seconds = '0' + seconds;
         return `${minutes}:${seconds}`; 
       }
       
