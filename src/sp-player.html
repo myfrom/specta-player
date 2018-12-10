@@ -249,7 +249,9 @@
           let i = 20;
           audioEl.volume = 0;
           const interval = setInterval(() => {
-            audioEl.volume = (audioEl.volume * 100 + 5) / 100;
+            let volume = (audioEl.volume * 100 + 5) / 100;
+            if (volume > 1) volume = 1;
+            audioEl.volume = volume;
             i--;
             if (i <= 0) {
               audioEl.volume = 1;
@@ -265,7 +267,9 @@
           let i = 20;
           audioEl.volume = 1;
           const interval = setInterval(() => {
-            audioEl.volume = (audioEl.volume * 100 - 5) / 100;
+            let volume = (audioEl.volume * 100 - 5) / 100;
+            if (volume < 0) volume = 0;
+            audioEl.volume = volume;
             i--;
             if (i <= 0) {
               audioEl.volume = 0;
