@@ -168,7 +168,6 @@
         window.addEventListener('touchmove', this._dragCallbackMove.bind(this), { passive: false });
         
         this._dragCallbackEnd = e => {
-          console.log({ e, skipTo: this._skipTo, target: e.target });
           if (typeof this._skipTo === 'number') {
             e.preventDefault();
             const duration = this._audioEl.duration,
