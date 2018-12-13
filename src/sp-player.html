@@ -123,7 +123,7 @@
         if (!this._progressBar) this._progressBar = this.shadowRoot.querySelector('#progress-bar');
         if (!this._progressTime) this._progressTime = this.shadowRoot.querySelector('#progress-time');
         
-        this.addEventListener('tap', this.togglePlay.bind(this));
+        this.addEventListener('click', this.togglePlay.bind(this));
         this._audioEl.addEventListener('ended', () => this.togglePlay(false));
 
         this._setDuration = () => {
@@ -153,7 +153,7 @@
             const percentage = xAxis/200,
                   duration = this._audioEl.duration,
                   currentTime = this._audioEl.currentTime;
-            let skipTo = currentTime - duration * percentage;
+            let skipTo = Math.round(currentTime - duration * percentage);
             if (skipTo > duration) skipTo = duration;
             if (skipTo < 0) skipTo = 0;
             this._skipTo = skipTo;
@@ -168,7 +168,9 @@
         window.addEventListener('touchmove', this._dragCallbackMove.bind(this), { passive: false });
         
         this._dragCallbackEnd = e => {
-          if (this._skipTo) {
+          console.log({ e, skipTo: this._skipTo, target: e.target });
+          if (typeof this._skipTo === 'number') {
+            e.preventDefault();
             const duration = this._audioEl.duration,
                   skipTo = this._skipTo;
             this._audioEl.currentTime = skipTo;
@@ -180,8 +182,8 @@
           }
           this._skipTo = this._initialDragCords = window.appState.dragging = null;
         };
-        window.addEventListener('mouseup', this._dragCallbackEnd.bind(this), { passive: true });
-        window.addEventListener('touchend', this._dragCallbackEnd.bind(this), { passive: true });
+        window.addEventListener('mouseup', this._dragCallbackEnd.bind(this), { passive: false });
+        window.addEventListener('touchend', this._dragCallbackEnd.bind(this), { passive: false });
       }
       
       disconnectedCallback() {
