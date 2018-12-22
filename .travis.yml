@@ -1,6 +1,6 @@
 sudo: enabled
 language: node_js
-node_js: stable
+node_js: v10.13.0
 
 install:
  - npm install -g polymer-cli
@@ -10,9 +10,8 @@ script:
  - echo 'No tests yet'
 
 before_deploy:
- - npm i -g bower
  - npm install
- - bower install
+ - ./node_modules/.bin/bower install
  - npm run build
 
 deploy:
