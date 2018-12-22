@@ -142,35 +142,52 @@
         #actions-row {
           left: 0;
           right: 0;
-          height: 70px;
-          padding: 0 5vw;
+          height: 74px;
+          padding: 0 4px;
           align-items: stretch;
           justify-content: stretch;
-          background-color: var(--white-color);
-          box-shadow:
-            0 10px 8px rgba(0,0,0,0.14),
-            0 -3px 14px rgba(0,0,0,0.12),
-            0 -4px 15px rgba(0,0,0,0.2);
         }
         #actions-row > paper-button {
           flex: 1;
           min-width: unset;
           min-height: unset;
           flex-direction: column;
-          text-transform: none;
-          font-weight: 400 !important;
           padding: 0;
-          margin: 0;
+          margin: 0 4px 8px 4px;
           font-size: 14px;
-          border-radius: 0;
+          background-color: var(--white-color);
+          transition: color 130ms ease-in-out, background-color 130ms ease-in-out;
+        }
+        #actions-row > paper-button::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          border-radius: 2px;
+          opacity: 0.3;
+          transition: opacity 130ms ease-in-out;
+          box-shadow:
+            0 12px 17px 2px rgba(0,0,0,0.14),
+            0  5px 22px 4px rgba(0,0,0,0.12),
+            0  7px  8px 0   rgba(0,0,0,0.2);
         }
         #actions-row > paper-button > iron-icon {
           width: 24px;
           height: 24px;
           margin-bottom: 6px;
+          color: var(--secondary-text-color);
         }
         #actions-row > paper-button[active] {
-          color: var(--primary-color);
+          background-color: var(--primary-color);
+          color: white !important;
+        }
+        #actions-row > paper-button[active]::after {
+          opacity: 1;
+        }
+        #actions-row > paper-button[active] > iron-icon {
+          color: white;
         }
        
       }
