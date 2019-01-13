@@ -1,6 +1,6 @@
 {
   "name": "specta-player",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "An easy way to play audio on your spectacles",
   "private": true,
   "scripts": {
