@@ -95,7 +95,7 @@ setTimeout(() => {
 
 
 // Register Service Worker
-/*::SERVICE-WORKER:: (will be activated at build)
+// ::SERVICE-WORKER:: (will be activated at build) 
 window.addEventListener('load', () => {
   navigator.serviceWorker.register('service-worker.js',
     { scope: location.origin.includes('github') ? '/specta-player/' : '/' })
@@ -113,7 +113,7 @@ window.addEventListener('load', () => {
         callback();
     });
 }, { once: true });
-::SERVICE-WORKER-END::*/
+// ::SERVICE-WORKER-END:: FIXME: Revert after done debugging
 
 
 // Load drag-n-drop if on desktop
@@ -285,3 +285,12 @@ window.addEventListener('idb-check-fail', e => {
       finishAnimation(true);
   }, { once: true });
 })();
+
+// Listen and expose `beforeinstallprompt` event
+window.installPromptEvent = new Promise((resolve, reject) => {
+  if (!('BeforeInstallPromptEvent' in window)) reject('a2hs-not-supported');
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    resolve(e);
+  });
+});;

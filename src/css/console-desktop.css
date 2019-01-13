@@ -80,3 +80,15 @@ sp-player:focus, sp-player:hover {
 #actions-row > paper-button[active] > iron-icon {
   color: white;
 }
+
+
+/* Add to home screen improvements */
+
+sp-install-banner {
+  position: absolute;
+  top: 54px;
+  right: 40px;
+  left: unset;
+  bottom: unset;
+  width: 360px;
+}

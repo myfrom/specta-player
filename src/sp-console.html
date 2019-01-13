@@ -26,6 +26,10 @@
   <template>
     <style include="shared-styles">
 
+      :host {
+        position: relative;
+      }
+
       @keyframes slide-out {
         
         0% {
@@ -260,6 +264,39 @@
         z-index: 1;
       }
 
+      /* Add to home screen improvements */
+
+      #install-button {
+        display: none;
+        color: var(--primary-color);
+        border: 2px solid var(--primary-color);
+        height: 36px;
+        padding: 0 10px;
+        align-items: center;
+        justify-content: center;
+        transition: transform 200ms ease-out, opacity 200ms ease-out 50ms;
+      }
+      #install-button.show {
+        display: flex;
+      }
+      #install-button.slide-in, #install-button.slide-out {
+        transform: translateY(-100%);
+        opacity: 0;
+      }
+      #install-button.slide-out {
+        transition: transform 160ms ease-in, opacity 160ms ease-in;
+      }
+
+      sp-install-banner.hidden {
+        display: none;
+      }
+      sp-install-banner {
+        position: fixed;
+        right: 8px;
+        left: 8px;
+        bottom: 82px;
+      }
+
     </style>
     <!-- ::POLYMER-BUILD-FIX-CONSOLE:: -->
     <link rel="stylesheet" href="/src/css/console-desktop.css"
@@ -273,6 +310,7 @@
     <div class="toolbar">
       <img alt="Very cool icon" src="images/icons/192.png">
       <h1 class="header">Specta Player</h1>
+      <paper-button id="install-button">Install</paper-button>
     </div>
     
     <div class="toolbar" id="buttons-row">
@@ -313,6 +351,8 @@
     </div>
     
     <div id="audio-container"></div>
+
+    <sp-install-banner class="hidden"></sp-install-banner>
   </template>
 
   <script>
@@ -349,6 +389,8 @@
           const el = e.detail;
           this._playingTracks.splice(this._playingTracks.indexOf(el), 1);
         });
+
+        window.installPromptEvent.then(this._enableA2hsUI.bind(this));
       }
       
       close() {
@@ -444,6 +486,108 @@
         };
         const file = new File([JSON.stringify(data)], 'specta-player-config.json', { type: "application/json;charset=utf-8" });
         saveAs(file);
+      }
+
+      _enableA2hsUI(event) {
+        const installBannerImport = importHref('src/sp-install-banner.html').then(() => {
+          const installBanner = this.shadowRoot.querySelector('sp-install-banner');
+          installBanner.classList.remove('hidden');
+          return installBanner;
+        });
+
+        const installBtn = this.shadowRoot.querySelector('#install-button');
+        installBtn.addEventListener('click', () => {
+          event.userChoice.then(choice => {
+            if (choice.outcome === 'accepted') {
+              console.info('Installed to homescreen');
+              gtag('event', 'installed-pwa', {
+                'event_category': 'add-to-homescreen',
+                'event_label': 'User has added PWA to their home screen'
+              });
+            } else {
+              console.info('Install prompt rejected');
+              gtag('event', 'install-rejected', {
+                'event_category': 'add-to-homescreen',
+                'event_label': 'User has rejected add to homescreen prompt'
+              });
+            }
+            this.dispatchEvent(new CustomEvent('delete-a2hs-ui', { bubbles: true, composed: true }));
+          });
+
+          event.prompt();
+        });
+        window.addEventListener('delete-a2hs-ui', async () => {
+          await this._hideInstallButton();
+          installBtn.remove();
+        }, { once: true });
+
+        if (window.matchMedia(window.MOBILE_MEDIA_QUERY).matches) {
+          // On phones show the banner, after it's hidden, get show the button
+          this._hideInstallButton();
+          installBannerImport.then(installBanner => {
+            installBanner.installPromptEvent = event;
+            installBanner.open();
+            installBanner.addEventListener('banner-closed', () => {
+              // Checking for parent element, will be null if element isn't attached
+              if(installBtn.parentElement) this._showInstallButton();
+            });
+          });
+          window.addEventListener('resize', function resizeHandler() {
+            if (!window.matchMedia(window.MOBILE_MEDIA_QUERY).matches) {
+              // Checking for parent element, will be null if element isn't attached
+              if (installBtn.parentElement) this._showInstallButton();
+              window.removeEventListener('resize', resizeHandler.bind(this), { passive: true });
+            }
+          }.bind(this), { passive: true });
+        } else {
+          this._showInstallButton();
+          installBannerImport.then(installBanner => installBanner.close());
+        }
+      }
+      
+      _showInstallButton() {
+        return new Promise((resolve, reject) => {
+          const installBtn = this.shadowRoot.querySelector('#install-button');
+          if (!installBtn) {
+            console.warn('Trying to manipulate install-button after it was destroyed.');
+            return;
+          };
+          // Might be shown already, in such case just resolve
+          if (installBtn.classList.contains('show')) {
+            resolve();
+            return;
+          }
+          // TODO: Transition should wait until console slide finishes
+          installBtn.addEventListener('transitionend', function handler(e) {
+            if (e.target !== installBtn) return;
+            installBtn.removeEventListener('transitionend', handler);
+            resolve();
+          });
+          installBtn.classList.add('show', 'slide-in');
+          doubleRAF(() => installBtn.classList.remove('slide-in'));
+        });
+      }
+      _hideInstallButton() {
+        return new Promise((resolve, reject) => {
+          const installBtn = this.shadowRoot.querySelector('#install-button');
+          if (!installBtn) {
+            const err = new Error('Trying to manipulate install-button after it was destroyed.');
+            console.warn(err.toString());
+            reject(err);
+          };
+          // Might be hidden already, in such case just resolve
+          if (!installBtn.classList.contains('show')) {
+            resolve();
+            return;
+          }
+          installBtn.addEventListener('transitionend', function handler(e) {
+            if (e.target !== installBtn) return;
+            installBtn.classList.remove('show', 'slide-out');
+            installBtn.removeEventListener('transitionend', handler);
+            resolve();
+          });
+          installBtn.classList.add('slide-out');
+        });
       }
       
     }

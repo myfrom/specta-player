@@ -1,0 +1,184 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/iron-iconset-svg/iron-iconset-svg.html">
+
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+
+<iron-iconset-svg size="24" name="install-banner">
+<svg><defs>
+<g id="clear"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></g>
+</defs></svg>
+</iron-iconset-svg>
+
+<dom-module id="sp-install-banner">
+  <template>
+    <style>
+
+      :host([opened]) {
+        display: flex;
+      }
+
+      :host {
+        display: none;
+        background-color: white;
+        padding: 12px 16px 14px 8px;
+        box-shadow: 
+          0 12px 17px 2px rgba(0,0,0,0.042),
+          0 5px 22px 4px rgba(0,0,0,0.036),
+          0 7px 8px 0 rgba(0,0,0,0.06);
+          border-radius: 2px;
+        background: url(../images/a2hs-banner-background.png);
+        background-position: center;
+        background-size: cover;
+        flex-direction: row;
+        align-items: center;
+        justify-content: stretch;
+        font-size: 14px;
+        transition: all 130ms ease-in-out;
+      }
+
+      paper-icon-button {
+        width: 42px;
+        height: 42px;
+        margin-right: 12px;
+        opacity: var(--secondary-opacity);
+        border-radius: 50%;
+        border: 2px solid rgba(0,0,0,0.5);
+      }
+
+      span {
+        flex-grow: 1;
+        flex-shrink: 1;
+        width: 0px;
+        font-size: 15px;
+        opacity: var(--primary-opacity);
+      }
+
+      paper-button {
+        margin: 0 0 0 12px;
+        color: white;
+        background-color: var(--primary-color);
+        font-weight: 500 !important;
+        --paper-button-ink-color: white;
+      }
+
+    </style>
+    
+    <paper-icon-button icon="install-banner:clear"></paper-icon-button>
+
+    <span>Add Specta Player to your apps, without downloading anything</span>
+
+    <paper-button>Add</paper-button>
+
+  </template>
+
+  <script>
+    class InstallBanner extends Polymer.Element {
+      
+      static get is() { return 'sp-install-banner'; }
+      
+      constructor() {
+        super();
+      }
+      
+      connectedCallback() {
+        super.connectedCallback();
+
+        this.shadowRoot.querySelector('paper-icon-button')
+          .addEventListener('click', this.close.bind(this));
+
+        this.shadowRoot.querySelector('paper-button')
+          .addEventListener('click', this._promptInstall.bind(this));
+
+        window.addEventListener('delete-a2hs-ui', this._remove.bind(this));
+      }
+
+      disconnectedCallback() {
+        super.disconnectedCallback();
+
+        this.shadowRoot.querySelector('paper-icon-button')
+          .removeEventListener('click', this.close.bind(this));
+
+        this.shadowRoot.querySelector('paper-button')
+          .removeEventListener('click', this._promptInstall.bind(this));
+
+        window.removeEventListener('delete-a2hs-ui', this._remove.bind(this));
+      }
+
+      async open() {
+        if (!this.installPromptEvent) return;
+        this.opened = true;
+        this.style.transitionTimingFunction = 'ease-out';
+        this.style.transform = 'translateY(100%)';
+        this.style.opacity = 0;
+        this.setAttribute('opened', true);
+        doubleRAF(() => {
+          this.style.transform = '';
+          this.style.opacity = 1;
+        });
+        await new Promise(r => {
+          this.addEventListener('transitionend', function handler(e) {
+            if (e.target !== this) return;
+            this.removeEventListener('transitionend', handler);
+            r();
+          }.bind(this));
+        });
+          this.style.transitionTimingFunction = '';
+        this.dispatchEvent(new CustomEvent('banner-opened', { bubbles: true, composed: true }));
+      }
+
+      async close() {
+        if (!this.opened) return;
+        this.opened = false;
+        this.style.transitionTimingFunction = 'ease-in';
+        this.style.transform = '';
+        this.style.opacity = 1;
+        doubleRAF(() => {
+          this.style.transform = 'translateY(100%)';
+          this.style.opacity = 0;
+        });
+        await new Promise(r => {
+          this.addEventListener('transitionend', function handler(e) {
+            if (e.target !== this) return;
+            this.removeEventListener('transitionend', handler);
+            r();
+          }.bind(this));
+        });
+          this.style.transitionTimingFunction = '';
+        this.removeAttribute('opened');
+        this.dispatchEvent(new CustomEvent('banner-closed', { bubbles: true, composed: true }));
+      }
+
+      _promptInstall() {
+        if (!this.installPromptEvent) this.close();
+        this.installPromptEvent.userChoice.then(choice => {
+          if (choice.outcome === 'accepted') {
+            console.info('Installed to homescreen');
+            gtag('event', 'installed-pwa', {
+              'event_category': 'add-to-homescreen',
+              'event_label': 'User has added PWA to their home screen'
+            });
+          } else {
+            console.info('Install prompt rejected');
+            gtag('event', 'install-rejected', {
+              'event_category': 'add-to-homescreen',
+              'event_label': 'User has rejected add to homescreen prompt'
+            });
+          }
+          window.dispatchEvent(new CustomEvent('delete-a2hs-ui', { bubbles: true, composed: true }));
+        });
+
+        this.installPromptEvent.prompt();
+      }
+      
+      async _remove() {
+        await this.close();
+        this.remove();
+      }
+      
+    }
+
+    customElements.define(InstallBanner.is, InstallBanner);
+  </script>
+</dom-module>
