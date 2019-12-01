@@ -3,15 +3,13 @@ language: node_js
 node_js: v10.13.0
 
 install:
- - npm install -g polymer-cli
- - polymer install 
+ - npm install
 
 script:
  - echo 'No tests yet'
 
 before_deploy:
  - npm install
- - ./node_modules/.bin/bower install
  - npm run build
 
 deploy:
