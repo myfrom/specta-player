@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=no">
+    <title>Specta Player</title>
+    <meta name="description" content="An easy way to play audio on your spectacles">
+    <meta name="theme-color" content="#009688">
+    <meta name="og:image" content="https://myfrom.github.io/specta-player/images/banner.png">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+
+    <script src="https://www.googletagmanager.com/gtag/js?id=UA-110620543-1" async></script>
+    <meta name="google-site-verification" content="BIs-6Iq2uapGM9ByYpH5o60yh0yLlGTyRgv2rELUvEk">
+    
+    <!-- TODO: Test the script as async -->
+    <script src="js/index.js" defer></script>
+
+    <!-- ::DEV-ANALYTICS-OVERWRITE:: -->
+    <script>
+      window['ga-disable-GA_MEASUREMENT_ID'] = true;
+    </script>
+    <!-- ::DEV-ANALYTICS-OVERWRITE-END:: -->
+
+    <link rel="stylesheet" href="css/index.css">
+
+    <!-- fg-loadcss lazy loading -->
+    <link rel="preload" href="css/circle.css"
+      as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="css/console.css"
+      as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="css/icons.css"
+      as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="https://fonts.googleapis.com/css?family=Montserrat:600|Roboto:400,500&display=swap"
+      as="style" onload="this.onload=null;this.rel='stylesheet'">
+    
+    <noscript>
+      <link rel="stylesheet" href="css/noscript.css">
+    </noscript>
+    
+  </head>
+  <body>
+    
+    <!-- Loader circle, used when uploading files -->
+    <div id="circle" hidden>
+      <svg id="upload-icon" hidden viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2H5z" id="upload-icon-arrow"/>
+        <path d="M9 7h4zm-4 2h14v2H5z" id="upload-icon-deck"/>
+      </svg>
+      <noscript>
+        <span>You must enable JavaScript for Specta Player to work ;-;</span>
+      </noscript>
+    </div>
+    
+
+    <!-- Editor UI -->
+    <div id="editor" hidden class="first-time">
+      <div class="toolbar">
+        <h1 class="header">Upload your audio</h1>
+        <button id="editor-done-btn" class="icon-button"><i class="icon i-done"></i></button>
+      </div>
+      
+      <div class="card table">
+        <div class="table-headers">
+          <div class="table-left-icons"></div>
+          <div class="table-wide">Name</div>
+          <div class="table-thin">File</div>
+          <div class="table-right-buttons">
+            <button id="editor-add-audio-btn" class="icon-button"><i class="icon i-add-audio"></i></button>
+            <button id="editor-add-label-btn" class="icon-button"><i class="icon i-add-label"></i></button>
+          </div>
+        </div>
+        <div id="editor-slip-container">
+          <template id="editor-table-content-template">
+            <div class="list-item">
+              <div class="table-left-icons">
+                <i class="icon i-drag-handle"></i>
+                <i class="icon" data-template="insertTypeIcon"></i>
+              </div>
+              <div class="table-wide">
+                <div class="textbox">
+                  <input type="text" label="Name" data-template="name">
+                  <div class="textbox-underline"></div>
+                </div>
+              </div>
+              <div class="table-thin"><abbr data-template="insertFilename"></abbr></div>
+              <div class="table-right-buttons">
+                <sp-preview-player data-template="songPreview"></sp-preview-player>
+                <button class="editor-table-delete-btn icon-button"><i class="icon i-bin"></i></button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+      <button id="editor-fab" class="fab-btn"><i class="icon i-done"></i></button>
+    </div>
+
+
+    <!-- Console UI -->
+    <div id="console" hidden>
+      <div class="toolbar">
+        <img id="logo" alt="Very cool icon" src="images/icons/192.png">
+        <h1 class="header">Specta Player</h1>
+        <!-- <button class="material-button" id="a2hs-install-btn">Install</buttonn> -->
+        <button id="menu-btn" class="icon-button"><i class="icon i-more"></i></button>
+        <sp-menu></sp-menu>
+      </div>
+      
+      <div class="toolbar" id="buttons-row">
+        <button class="material-button" id="edit-btn">
+          <i class="icon i-edit"></i>
+          Edit
+        </buttonn>
+        <button class="material-button" id="download-btn">
+          <i class="icon i-download"></i>
+          Download
+        </buttonn>
+        <button class="material-button" id="clear-btn">
+          <i class="icon i-clear"></i>
+          Clear all
+        </buttonn>
+      </div>
+        
+      <div class="toolbar" id="actions-row">
+        <button class="material-button" id="stop-btn">
+          <i class="icon i-stop"></i>
+          Stop all
+        </buttonn>
+        
+        <button class="material-button" id="loop-btn">
+          <i class="icon i-loop"></i>
+          Loop
+        </buttonn>
+        
+        <button class="material-button" id="crossfade-btn">
+          <i class="icon i-crossfade"></i>
+          Crossfade
+        </buttonn>
+        
+        <button class="material-button" id="multi-btn">
+          <i class="icon i-multi"></i>
+          Multi
+        </buttonn>
+      </div>
+      
+      <div id="audio-container"></div>
+    </div>
+
+  </body>
+</html>

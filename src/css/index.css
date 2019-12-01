@@ -1,0 +1,131 @@
+html {
+  --main-font: 'Roboto', 'Noto', 'Halvetica', 'Arial', sans-serif;
+  --header-font: 'Montserrat', 'Roboto', 'Arial Black', sans-serif;
+  
+  --accent-color: #009688;
+  --primary-color: #009688;
+  --main-text-color: rgba(0,0,0,0.87);
+  --secondary-text-color: rgba(0,0,0,0.54);
+  --hint-text-color: rgba(0,0,0,0.38);
+  --divider-color: rgba(0,0,0,0.12);
+  --background-color: #e0e0e0;
+  --white-color: white;
+  --error-background: #ffcdd2;
+  --error-color: #b71c1c;
+  --input-bg-color: #f8f8f8;
+  --audio-cont-bg-color: #f4f4f4;
+  --audio-header-bg-color: #EEEEEE;
+  --danger-color: #f44336;
+  --dialog-bg-color: #ffffff;
+  
+  --primary-opacity: 0.87;
+  --secondary-opacity: 0.54;
+  --hint-opacity: 0.38;
+  --divider-opacity: 0.12;
+}
+
+html.dark {
+  --accent-color: #7bd4bf;
+  --primary-color: #277069;
+  --main-text-color: rgb(255, 255, 255);
+  --secondary-text-color: rgba(255, 255, 255, 0.72);
+  --hint-text-color: rgba(255, 255, 255, 0.5);
+  --divider-color: rgba(255, 255, 255, 0.24);
+  --background-color: #121212;
+  --white-color: #272727;
+  --error-background: #410006;
+  --error-color: #881818;
+  --input-bg-color: #202020;
+  --audio-cont-bg-color: #181818;
+  --audio-header-bg-color: #1f1f1f;
+  --danger-color: #af0f04;
+  --dialog-bg-color: #1e1e1e;
+  
+  --primary-opacity: 1;
+  --secondary-opacity: 0.6;
+  --hint-opacity: 0.44;
+  --divider-opacity: 0.12;
+}
+html.dark #logo {
+  filter: brightness(0.8);
+}
+html.dark #upload-icon {
+  fill: var(--divider-color);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not(.theme) {
+    --accent-color: #7bd4bf;
+    --primary-color: #277069;
+    --main-text-color: rgb(255, 255, 255);
+    --secondary-text-color: rgba(255, 255, 255, 0.72);
+    --hint-text-color: rgba(255, 255, 255, 0.5);
+    --divider-color: rgba(255, 255, 255, 0.24);
+    --background-color: #121212;
+    --white-color: #272727;
+    --error-background: #410006;
+    --error-color: #881818;
+    --input-bg-color: #202020;
+    --audio-cont-bg-color: #181818;
+    --audio-header-bg-color: #1f1f1f;
+    --danger-color: #af0f04;
+    --dialog-bg-color: #1e1e1e;
+    
+    --primary-opacity: 1;
+    --secondary-opacity: 0.6;
+    --hint-opacity: 0.44;
+    --divider-opacity: 0.12;
+  }
+  html:not(.theme) #logo {
+    filter: brightness(0.8);
+  }
+  html:not(.theme) #upload-icon {
+    fill: var(--divider-color);
+  }
+}
+
+
+body, html {
+  background: var(--background-color);
+  margin: 0;
+  width: 100vw;
+  min-height: 100vh;
+  font-family: var(--main-font);
+  color: var(--main-text-color);
+  overflow-x: hidden;
+  font-size: 14px;
+  position: relative;
+}
+
+body {
+  overflow-y: scroll;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+* {
+  user-select: none;
+  box-sizing: border-box;
+}
+
+input[type="file"] {
+  display: none;
+}
+
+#editor, #console {
+  max-width: 900px;
+  margin: auto;
+  position: relative;
+}
+
+/* In case upload-overlay forgets it has to disappear on phones */
+@media (max-width: 600px) and (orientation: portrait),
+       (max-width: 960px) and (orientation: landscape) {
+
+  #dragndrop {
+    display: none !important;
+  }
+
+}

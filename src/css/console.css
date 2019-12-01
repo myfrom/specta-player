@@ -1,0 +1,429 @@
+/* Lazy styles also needed for editor, since console.css is always loaded */
+
+.toolbar {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  flex-direction: row;
+  height: 56px;
+  padding: 0 24px;
+}
+
+h1.header {
+  font-family: var(--header-font);
+  font-weight: 600;
+  color: var(--primary-color);
+  font-size: 24px;
+  margin: 0;
+  -webkit-margin-before: 0;
+  -webkit-margin-after: 0;
+  -webkit-margin-start: 0;
+  -webkit-margin-end: 0;
+  flex-grow: 1;
+}
+
+i.icon {
+  width: var(--icon-size, 24px);
+  height: var(--icon-size, 24px);
+  font-size: var(--icon-size, 24px);
+  line-height: var(--icon-size, 24px);
+}
+
+button {
+  font-weight: 500 !important;
+}
+
+button.material-button {
+  background: none;
+  color: var(--accent-color);
+  border: none;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-family: Roboto, sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  height: 36px;
+  padding: 0 8px;
+  margin: 0 8px;
+  text-transform: uppercase;
+  outline: none;
+  overflow: hidden;
+  position: relative;
+}
+
+button.icon-button {
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  font-weight: normal;
+  border-radius: 50%;
+  position: relative;
+  background: none;
+  border: none;
+  outline: none !important;
+}
+button.icon-button::before,
+button.material-button::before {
+  content: "";
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  background-color: var(--divider-color);
+  opacity: 0;
+  transition: 160ms opacity ease-in;
+}
+button.material-button::before {
+  border-radius: 2px;
+}
+button.icon-button:focus::before,
+button.icon-button:hover::before,
+button.material-button:focus::before,
+button.material-button:hover::before {
+  opacity: 0.75;
+  transition-timing-function: ease-out;
+}
+button.icon-button:active::before,
+button.material-button:active::before {
+  opacity: 1;
+}
+button.icon-button i {
+  width: 100%;
+  height: 100%;
+}
+
+mwc-dialog, sp-menu {
+  --mdc-theme-surface: var(--dialog-bg-color);
+  --mdc-dialog-scrim-color: rgba(0, 0, 0, 0.5);
+  --mdc-dialog-title-ink-color: var(--main-text-color);
+  --mdc-dialog-content-ink-color: var(--secondary-text-color);
+  --mdc-dialog-shape-radius: 2px;
+}
+
+mwc-snackbar .icon-button {
+  color: rgba(255, 255, 255, 0.38); /* Hardcoded colour, beacuse snackbar isn't style-able */
+}
+
+@media (orientation: landscape) and (min-width: 601px), (orientation: portrait) and (min-width: 961px) {
+  /* Desktop only */
+  .toolbar {
+    height: 64px;
+    padding: 0 36px;
+  }
+}
+
+/* Console specific styles */
+
+#console {
+  transition:
+    transform 240ms cubic-bezier(0.165, 0.84, 0.44, 1),
+    opacity 160ms cubic-bezier(0.165, 0.84, 0.44, 1) 80ms;
+  transform: none;
+  opacity: 1;
+  min-height: 100vh;
+}
+#console.closing {
+  transition-timing-function: cubic-bezier(0.895, 0.03, 0.685, 0.22), cubic-bezier(0.895, 0.03, 0.685, 0.22);
+  transition-delay: 0, 0;
+  transform: translateY(50vh);
+  opacity: 0;
+}
+#console.opening {
+  transform: translateY(50vh);
+  opacity: 0;
+}
+#actions-row {
+  transition: transform 240ms;
+  transition-timing-function: inherit;
+}
+#console.closing #actions-row {
+  transform: translateY(calc(-50vh + 100%));
+}
+#console.opening #actions-row {
+  transform: translateY(calc(-50vh + 100%));
+}
+
+.toolbar > img {
+  width: 40px;
+  height: 40px;
+  margin-right: 16px;
+}
+
+#buttons-row {
+  padding-left: 13px;
+}
+#buttons-row > button {
+  padding: 0 10px 0 8px;
+  height: 36px;
+  margin: 0 3px;
+  color: var(--secondary-text-color);
+}
+#buttons-row > button > .icon {
+  height: 24px;
+  width: 24px;
+  margin-right: 5px;
+  color: var(--primary-color);
+}
+#clear-btn::before {
+  background-color: var(--danger-color);
+}
+#clear-btn:hover::before,
+#clear-btn:focus::before {
+  opacity: 0.1;
+}
+#clear-btn:active::before {
+  opacity: 0.3;
+}
+
+#actions-row {
+  z-index: 2;
+  position: fixed;
+  bottom: 0;
+  display: flex;
+  max-width: 900px;
+  margin: 0 auto;
+  height: 70px;
+  padding: 0 22px;
+}
+#actions-row > button {
+  padding: 0 10px 0 8px;
+  height: 36px;
+  margin: 0 6px;
+  width: 126px;
+  overflow: visible;
+  color: var(--main-text-color);
+  background-color: var(--white-color);
+  transition: color 130ms ease-in-out, background-color 130ms ease-in-out;
+}
+#actions-row > button > .icon {
+  height: 24px;
+  width: 24px;
+  color: var(--secondary-text-color);
+  transition: color 130ms ease-in-out;
+  margin-right: 5px;
+}
+#actions-row > button::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 2px;
+  opacity: 0.3;
+  transition: opacity 130ms ease-in-out;
+  box-shadow:
+    0 12px 17px 2px rgba(0,0,0,0.14),
+    0  5px 22px 4px rgba(0,0,0,0.12),
+    0  7px  8px 0   rgba(0,0,0,0.2);
+}
+#actions-row > button:focus::after,
+#actions-row > button:hover::after {
+  opacity: 0.6;
+}
+#actions-row > button.active::after {
+  opacity: 1;
+}
+#actions-row > button.active {
+  background-color: var(--primary-color);
+  color: var(--white-color) !important;
+}
+#actions-row > button.active > .icon {
+  color: var(--white-color);
+}
+#actions-row > button::before {
+  display: none;
+}
+
+#menu-btn {
+  color: var(--secondary-text-color);
+}
+
+sp-menu {
+  display: block;
+  position: absolute;
+  top: 8px;
+  right: -2px;
+}
+@media (min-width: 1130px) {
+  /* Fix for menu running away right */
+  sp-menu {
+    right: 200px;
+  }
+}
+
+sp-install-banner {
+  display: none;
+}
+html.dark sp-install-banner {
+  background-image: url(../images/a2hs-banner-background-dark.jpg);
+}
+
+@media (orientation: landscape) and (max-width: 600px),
+ (orientation: portrait) and (max-width: 960px) {
+   /* Phone styles */
+  
+  #actions-row {
+    left: 0;
+    right: 0;
+    height: 74px;
+    padding: 0 4px;
+    align-items: stretch;
+    justify-content: stretch;
+  }
+  #actions-row > button {
+    flex: 1;
+    min-width: unset;
+    min-height: unset;
+    flex-direction: column;
+    padding: 0;
+    margin: 0 4px 8px 4px;
+    font-size: 14px;
+    height: 66px;
+  }
+  #actions-row > button > .icon {
+    margin-bottom: 6px;
+  }
+
+  sp-menu {
+    right: -24px;
+  }
+
+  sp-install-banner {
+    position: fixed;
+    right: 8px;
+    left: 8px;
+    bottom: 82px;
+  }
+  sp-install-banner[opened] {
+    display: flex;
+  }
+ 
+}
+
+#audio-container {
+  margin-bottom: 80px;
+  box-shadow:
+    0 3px 4px rgba(0,0,0,0.1),
+    0 1px 5px rgba(0,0,0,0.1);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-gap: 1px;
+  background-color: var(--audio-cont-bg-color);
+}
+
+#audio-container > h2 {
+  grid-column: 1 / -1;
+  font-size: 14px;
+  font-family: var(--header-font);
+  font-weight: 600;
+  padding: 0 16px;
+  margin: 0;
+  height: 48px;
+  line-height: 48px;
+  background-color: var(--audio-header-bg-color);
+  color: var(--main-text-color);
+}
+
+@media (min-width: 480px) {
+
+  #audio-container {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+}
+
+@media (orientation: portrait) and (max-width: 960px) {
+   /* Phone vertical styles */
+  
+  #audio-container {
+    margin-bottom: 102px;
+  }
+ 
+}
+
+@media (orientation: portrait) and (min-width: 840px),
+ (orientation: landscape) and (min-width: 960px) {
+   /* Desktop styles */
+
+  #audio-container {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  #buttons-row {
+    padding: 0 25px;
+  }
+  
+  sp-player:focus-within::after,
+  sp-player:hover::after {
+    opacity: 0.3;
+  }
+  sp-player:focus-within, sp-player:hover {
+    z-index: 1;
+  }
+
+  sp-menu {
+    top: 12px;
+  }
+  
+  /* Add to home screen improvements */
+
+  sp-install-banner {
+    position: absolute;
+    top: 54px;
+    right: 40px;
+    left: unset;
+    bottom: unset;
+    width: 360px;
+  }
+  
+}
+
+sp-player {
+  background-color: var(--white-color);
+  position: relative;
+  height: 82px;
+}
+
+sp-player::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  transition: opacity 160ms ease-in-out;
+  box-shadow:
+    0 3px  5px rgba(0,0,0,0.14),
+    0 1px 18px rgba(0,0,0,0.2);
+}
+sp-player[playing]::after {
+  opacity: 1 !important;
+}
+/* sp-player[pressed]::after { TODO: Remove or replicate
+  opacity: 0.3;
+} */
+sp-player[playing], sp-player[pressed] {
+  z-index: 1;
+}
+
+#clear-all-dialog button[dialogaction="ok"] {
+  color: var(--danger-color);
+}
+#clear-all-dialog button[dialogaction="ok"]::before {
+  background-color: var(--danger-color);
+}
+#clear-all-dialog button[dialogaction="ok"]:hover::before,
+#clear-all-dialog button[dialogaction="ok"]:focus::before {
+  opacity: 0.1;
+}
+#clear-all-dialog button[dialogaction="ok"]:active::before {
+  opacity: 0.3;
+}

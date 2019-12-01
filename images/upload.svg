@@ -1,4 +1,0 @@
-<svg fill="#000000" id="upload-icon" class="hidden faded-out" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-  <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2H5z" id="upload-icon-arrow"/>
-  <path d="M9 7h4zm-4 2h14v2H5z" id="upload-icon-deck"/>
-</svg>

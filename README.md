@@ -20,7 +20,7 @@ Main focus of this app was to provide a beautful, fast and smooth experience for
 ## Contributing
 
 - Fork the repo and start making your changes
-- Test locally with `polymer serve` from [Polymer CLI](https://www.polymer-project.org/2.0/docs/tools/polymer-cli)
+- Test locally with `npm start`
 - Build everything using `npm run build`
 - Upload your changes and test once again on your Github Pages (https://_yourusername_.github.io/specta-player/)
 - Submit Pull Request 😃

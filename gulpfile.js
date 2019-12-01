@@ -1,169 +1,187 @@
 const logger = require('@myfrom/logger'),
-      // Tools
       gulp = require('gulp'),
-      gulpif = require('gulp-if'),
       del = require('del'),
-      mergeStream = require('merge-stream'),
-      polymerBuild = require('polymer-build'),
-      errorHandler = require('gulp-error-handle'),
-      minimatch = require('minimatch'),
-      replace = require('gulp-replace'),
-      fs = require('fs').promises,
-      path = require('path'),
+      gulpif = require('gulp-if'),
+      through2 = require('through2'),
       workbox = require('workbox-build'),
+      { resolve } = require('path');
+      // Webpack and dev server
+      webpack = require('webpack'),
+      Browser = require('browser-sync'),
+      webpackDevMiddleware = require('webpack-dev-middleware'),
+      wp = require('./webpack.config.js'),
       // Minifiers
-      jsmin = require('gulp-babel-minify'),
       htmlmin = require('gulp-htmlmin'),
-      svgmin = require('gulp-svgmin'),
-      cssmin = require('gulp-clean-css');
+      postcss = require('gulp-postcss'),
+      autoprefixer = require('autoprefixer'),
+      cssnano = require('cssnano'),
+      imagemin = require('gulp-imagemin');
 
-const minOptions =
-{
-  js: {
-    mangle: {
-      keepClassName: true
+const DEV = process.env.NODE_ENV !== 'production';
+const DIST = resolve(__dirname, 'dist');
+// Sections to be cut out or replaced
+const SECTIONS = {
+  'src/index.html': {
+    'DEV-ANALYTICS-OVERWRITE': {
+      action: 'delete-in-between'
     }
   },
-  html: {
-    'collapseWhitespace': true,
-    'removeComments': true
+  'src/sp-console.html': {
+    'POLYMER-BUILD-FIX-CONSOLE': {
+      action: 'delete-in-between'
+    },
+    'POLYMER-BUILD-FIX-CONSOLE-PROPER': {
+      action: 'delete-tag'
+    }
   },
-  svg: {
-    plugins: [{
-      removeComments: true
-    },{
-      cleanupIDs: false
-    }]
-  },
-  css: {
-    level: 1
+  'src/sp-upload.html': {
+    'POLYMER-BUILD-FIX-UPLOADER': {
+      action: 'delete-in-between'
+    },
+    'POLYMER-BUILD-FIX-UPLOADER-PROPER': {
+      action: 'delete-tag'
+    }
   }
-};
+}
 
-const polymerJson = require('./polymer.json'),
-      buildConfig = polymerJson.betterPolymerBuild || {},
-      buildDir = buildConfig.buildDirectory || 'dist';
+logger.log(DEV ? 'Development mode' : 'Building for production', 'info')
 
-/**
- * Waits for the given ReadableStream
- */
-function waitFor(stream) {
-  return new Promise((resolve, reject) => {
-    stream.once('end', resolve);
-    stream.once('error', reject);
+
+function sections() {
+  return through2.obj((file, encoding, callback) => {
+    for (let filename in SECTIONS) {
+      // Try to match files that have defined sections against current file
+      const query = new RegExp(`${filename.replace('/', '[/,\\\\]')}$`, 'i');
+      if (query.test(file.path)) {
+        // Passed, modofy the file
+        if (file.isBuffer()) {
+          let content = file.contents.toString(encoding);
+          const sectionsInFile = SECTIONS[filename],
+                // Looks for sections in commented ::SECTION-NAME:: brackets
+                sectionsSearch = content.match(/^.*::([A-Z\-]+)(?<!-END)::.*((\s|.)*?)^.*::([A-Z\-]+)-END::.*/gm);
+          if (!sectionsSearch.length)
+            // Not founda any, move on
+            return callback(null, file);
+          sectionsSearch.forEach(result => {
+            // For each match execute needed command
+            const detailsSearch = result.match(/^.*::([A-Z\-]+)(?<!-END)::.*((\s|.)*?)^.*::([A-Z\-]+)-END::.*/m);
+            if (sectionsInFile[detailsSearch[1]].action === 'delete-tag')
+              content = content.replace(result, detailsSearch[2]);
+            if (sectionsInFile[detailsSearch[1]].action === 'delete-in-between')
+              content = content.replace(result, '');
+          });
+          file.contents = Buffer.from(content, encoding);
+          return callback(null, file);
+        } else {
+          if (!file.isNull())
+            logger.log(logger.chalk`Couldn't handle sections in file {red ${filename}}, skipping`, 'warningHigh');
+          return callback(null, file);
+        }
+      }
+    }
+    // No sections in this file, move on
+    return callback(null, file);
   });
 }
 
-logger.log(logger.chalk`Building into directory {magenta ${__dirname}/${buildDir}}`);
-logger.log(logger.chalk`Data from Polymer Project {magenta ${__dirname}/polymer.json}`);
 
+function cleanup() {
+  return del(DIST);
+}
 
+function html() {
+  return gulp.src(['./src/**/*.html', '!./src/elements/*.html'], { base: './src', sourcemaps: DEV })
+    .pipe(gulpif(!DEV, sections()))
+    .pipe(gulpif(!DEV, htmlmin({
+      collapseBooleanAttributes: true,
+      collapseWhitespace: true,
+      removeComments: true
+    })))
+    .pipe(gulp.dest(DIST));
+}
 
-gulp.task('cleanup', () => del([buildDir]));
+function css() {
+  return gulp.src(['./src/**/*.css', '!./src/elements/*.css'], { base: './src', sourcemaps: DEV })
+    .pipe(gulpif(
+      !DEV,
+      postcss([ autoprefixer(), cssnano() ]),
+      postcss([ autoprefixer() ])
+    ))
+    .pipe(gulp.dest(DIST));
+}
 
+function images() {
+  return gulp.src('./src/**/*.+(jpeg|jpg|png|svg)', { base: './src', sourcemaps: DEV })
+    .pipe(gulpif(!DEV, imagemin([
+      imagemin.gifsicle(), imagemin.jpegtran(), imagemin.optipng(),
+      imagemin.svgo({ cleanupIDs: false })
+    ])))
+    .pipe(gulp.dest(DIST));
+}
 
-gulp.task('build', ['cleanup'], async () => {
-  const polymerProject = new polymerBuild.PolymerProject(polymerJson);
+function copy() {
+  return gulp.src('./src/**/*.!(html|js|scss|css|jpeg|jpg|png|svg)', { base: './src', sourcemaps: DEV })
+    .pipe(gulp.dest(DIST));
+}
 
-  // Run sections modifications
-  const replaceFiles = {},
-        sections = buildConfig.sections || [];
-  if (sections.length === 0) return;
-  logger.log('Processing sections');
-  for (let filename in sections) {
-    let file;
-    try {
-      file = await fs.readFile(path.join(__dirname, filename), 'utf8');
-    } catch(err) {
-      if (err.code = 'ENOENT')
-        logger.log(logger.chalk`Couldn't find file {red ${filename}}, skipping`, 'warningHigh');
-      else throw err;
-    }
-    for (sectionName in sections[filename]) {
-      const section = sections[filename][sectionName];
-      if (section.action === 'delete-tag') {
-        file = file.replace(new RegExp(`^.*::${sectionName}(-END)?::.*\\s`, 'gm'), '');
-      } else if (section.action === 'delete-in-between') {
-        const errorHandler = err =>
-          logger.log(logger.chalk`Couldn't find section {red ${sectionName} in file {magenta ${filename}}, skipping`, 'warningHigh')
-        try {
-          const start = file.search(new RegExp(`^.*::${sectionName}::`, 'm')),
-                length = file.match(new RegExp(`^.*::${sectionName}-END::.*\\s`, 'm'))[0].length,
-                end = file.search(new RegExp(`^.*::${sectionName}-END::.*\\s`, 'm')) + length;
-          if (start === -1) return void errorHandler({ code: 'NOTFOUND' });
-          file = file.replace(file.substring(start, end), '');
-        } catch(err) {
-          errorHandler(err);
-        }
-      } else {
-        logger.log(logger.chalk`Section {red ${sectionName}} provided with no valid action, skipping`, 'warningHigh');
-      }
-    }
-    replaceFiles[filename] = file;
-  }
-  logger.log('All sections work done', 'success');
+const scripts = wp.scripts;
 
-  // Minify code
-  logger.log('Getting into minifying your code')
-  const ignoredFiles = buildConfig.ignoredFiles || [],
-        skipTypes = buildConfig.skipTypes || {},
-  shallPass = (file, type) => {
-    if (/.*\.min\.[^\.]+$/.test(file.path)) return false;
-    const regex = new RegExp(`\.${type}$`);
-    let isIgnored = false;
-    ignoredFiles.forEach(pattern => {
-      if (minimatch(file.path, __dirname + '/' + pattern)) {
-        isIgnored = true;
-        return;
-      }
-    });
-    return regex.test(file.path) && !isIgnored;
-  }
-
-  let sourcesStream = mergeStream(polymerProject.sources(), gulp.src([polymerJson.entrypoint])),
-        dependenciesStream = polymerProject.dependencies();
-
-  function processor(stream) {
-    const streamSplitter = new polymerBuild.HtmlSplitter();
-
-    stream = stream
-      .pipe(errorHandler( function(err) {
-        logger.log(err.toString(), 'warningHigh');
-        this.emit('end');
-      }))
-      .pipe(gulpif(file => file.relative in replaceFiles, replace(/(?:.|\s)*/gm,
-        function(match) {
-          return match ? replaceFiles[this.file.relative] : '';
-        })))
-      .pipe(streamSplitter.split())
-      .pipe(gulpif(file => !skipTypes.svg && shallPass(file, 'svg'), svgmin(minOptions.svg)))
-      .pipe(gulpif(file => !skipTypes.js && shallPass(file, 'js'), jsmin(minOptions.js)))
-      .pipe(gulpif(file => !skipTypes.css && shallPass(file, 'css'), cssmin(minOptions.css)))
-      .pipe(gulpif(file => !skipTypes.html && shallPass(file, 'html'), htmlmin(minOptions.html)));
-    
-    return stream.pipe(streamSplitter.rejoin());
-  };
-
-  const processed = [];
-  !buildConfig.skipSources && processed.push(processor(sourcesStream));
-  !buildConfig.skipDependencies && processed.push(processor(dependenciesStream));
-
-  const finalStream = mergeStream(...processed).pipe(gulp.dest(buildDir));
-  
-  await waitFor(finalStream);
-  logger.log('Finished building files', 'success');
-});
-
-
-gulp.task('generate-sw', ['build'], async () => {
-  await fs.writeFile(path.join(__dirname, buildDir, 'service-worker.js'), 'utf8');
-  await workbox.injectManifest({
-    swSrc: 'service-worker.js',
-    swDest: path.join(buildDir, 'service-worker.js'),
-    globDirectory: buildDir,
+function generateSw() {
+  return workbox.injectManifest({
+    swSrc: './src/js/service-worker.js',
+    swDest: `${DIST}/service-worker.js`,
+    globDirectory: DIST,
     globPatterns: ['**/*.*']
+  }).then(({count, size}) => {
+    logger.log(`Generated SW, will precache ${count} files, ${size} bytes.`, 'info');
   });
+}
+
+
+// Dynamic server
+
+const browser = Browser.create();
+const bundler = webpack(wp.config);
+
+const serve = gulp.series(cleanup, gulp.parallel( html, scripts, css, images, copy), () => {
+
+  let config = {
+    server: './dist',
+    middleware: [
+      webpackDevMiddleware(bundler),
+    ],
+    open: false,
+    port: 8080
+  }
+
+  browser.init(config);
+
+  const reload = cb => {
+    browser.reload();
+    cb();
+  }
+
+  gulp.watch('../src/**/*.js').on('change', () => browser.reload());
+  gulp.watch(['./src/**/*.html', '!./src/elements/*.html'], gulp.series(html, reload));
+  gulp.watch(['./src/**/*.css', '!./src/elements/*.css'], gulp.series(css, reload));
+  gulp.watch('./src/**/*.+(jpeg|jpg|png|svg)', gulp.series(images, reload));
+  gulp.watch('./src/**/*.!(html|js|scss|css|jpeg|jpg|png|svg)', gulp.series(copy, reload));
 });
 
+const build =
+  gulp.series(
+    cleanup,
+    gulp.parallel(
+      html,
+      scripts,
+      css,
+      images,
+      copy
+    ),
+    generateSw
+  );
 
-gulp.task('default', ['cleanup', 'build', 'generate-sw'])
+module.exports = {
+  default: build,
+  serve, cleanup, html, scripts, css, images, copy, generateSw
+}
